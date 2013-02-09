@@ -1,0 +1,18 @@
+require 'rubygems'
+require 'rubygems/package_task'
+require 'xni/export_task'
+
+def gem_spec
+  @gem_spec ||= Gem::Specification.load('example.gemspec')
+end
+
+XNI::ExportTask.new('lib/example', 'ext', :gem_spec => gem_spec) do |t|
+  t.export 'example.rb'
+end
+
+Gem::PackageTask.new(gem_spec) do |pkg|
+  pkg.need_zip = true
+  pkg.need_tar = true
+  pkg.package_dir = 'pkg'
+end
+
