@@ -1,3 +1,5 @@
+require 'xni/util'
+
 if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
   require 'xni/jruby/data_object'
 else
@@ -5,6 +7,11 @@ else
 end
 
 module XNI
+  ALLOWED_DATA_TYPES = [
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
+      :float, :double, :pointer
+  ]
+  
   def self.autoreleasepool(&b)
     AutoReleasePool.new &b
   end
@@ -21,6 +28,9 @@ module XNI
       end
 
       def data(*fields)
+        fields.each_slice(2) do |name, type| 
+          raise TypeError.new("unsupported data type, #{type} for field #{name}") unless ALLOWED_DATA_TYPES.include?(type)
+        end
         __xni_data_fields__ *fields
       end
 

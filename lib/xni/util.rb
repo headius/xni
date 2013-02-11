@@ -1,7 +1,51 @@
 #
 # These are utilities for internal XNI use - do NOT use in general code.
 #
+
+require 'ffi'
+require 'xni/pointer'
+
 module XNI
+  module TransientString
+    extend FFI::DataConverter
+    native_type FFI::Type::POINTER
+    def self.to_native(value, ctx)
+      value ? FFI::MemoryPointer.from_string(value) : FFI::Pointer::NULL
+    end
+    
+    def self.from_native(value, ctx)
+      value.null? ? nil : value.get_string(0)
+    end
+  end
+  
+  TypeMap = {
+      :char => FFI::Type::CHAR, 
+      :uchar => FFI::Type::UCHAR, 
+      :short => FFI::Type::SHORT, 
+      :ushort => FFI::Type::USHORT, 
+      :int => FFI::Type::INT, 
+      :uint => FFI::Type::UINT, 
+      :long => FFI::Type::LONG, 
+      :ulong => FFI::Type::ULONG, 
+      :long_long => FFI::Type::LONG_LONG, 
+      :ulong_long => FFI::Type::ULONG_LONG,
+      :float => FFI::Type::FLOAT, 
+      :double => FFI::Type::DOUBLE, 
+      :pointer => FFI::Type::Mapped.new(Pointer), 
+      :cstring  => FFI::Type.const_defined?(:TRANSIENT_STRING) ? FFI::Type.const_get(:TRANSIENT_STRING) : FFI::Type::Mapped.new(TransientString),
+      :void => FFI::Type::VOID
+  }.freeze
+  
+  ALLOWED_RESULT_TYPES = [
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
+      :float, :double, :pointer, :cstring, :void
+  ]
+
+  ALLOWED_PARAMETER_TYPES = [
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
+      :float, :double, :pointer, :cstring
+  ]
+
   module Util
     def self.extension(mod)
       begin
@@ -27,16 +71,35 @@ module XNI
       address
     end
     
+    def self.result_type(type)
+      if ALLOWED_RESULT_TYPES.include?(type) && TypeMap.has_key?(type)
+        return TypeMap[type]
+      end
+
+      raise TypeError.new("unsupported result type, #{type}")
+    end
+    
+    def self.param_type(type)
+      if ALLOWED_PARAMETER_TYPES.include?(type) && TypeMap.has_key?(type)
+        return TypeMap[type]
+        
+      elsif type.is_a?(DataObject)
+        return FFI::Type::Mapped.new(type)
+      end
+      
+      raise TypeError.new("unsupported parameter type, #{type}")
+    end
+    
     def self.module_stub(mod, name, params, rtype, options = {})
-      ffi_params = ([ FFI::Type::POINTER ] + params).map { |t| mod.__xni__.__ffi__.find_type(t) }
-      options = { :save_errno => false } .merge(options)
-      FFI::Function.new(mod.__xni__.__ffi__.find_type(rtype), ffi_params, stub_address(mod, name), options)
+      options = { :save_errno => false }.merge(options)
+      ffi_params = [ FFI::Type::POINTER ] + params.map { |t| param_type(t) }
+      FFI::Function.new(result_type(mod, rtype), ffi_params, stub_address(mod, name), options)
     end
 
     def self.instance_stub(mod, name, params, rtype, options = {})
-      ffi_params = ([ FFI::Type::POINTER, FFI::Type::POINTER ] + params).map { |t| mod.__xni__.__ffi__.find_type(t) }
-      options = { :save_errno => false } .merge(options)
-      FFI::Function.new(mod.__xni__.__ffi__.find_type(rtype), ffi_params, stub_address(mod, name), options)
+      options = { :save_errno => false }.merge(options)
+      ffi_params = [ FFI::Type::POINTER, FFI::Type::POINTER ] + params.map { |t| param_type(t) }
+      FFI::Function.new(result_type(mod, rtype), ffi_params, stub_address(mod, name), options)
     end
   end
 end

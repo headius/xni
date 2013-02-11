@@ -65,7 +65,7 @@ module XNI
       :float => 'float',
       :double => 'double',
       :pointer => 'void *',
-      :string => 'const char *',
+      :cstring => 'const char *',
   }
 
   module TypeMapCache
