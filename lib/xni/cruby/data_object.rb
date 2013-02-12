@@ -7,14 +7,11 @@ require 'xni/cruby/auto_release_pool'
 module XNI
   class DataObject
     attr_reader :__xni_struct__
-    class << self
-      alias_method :__orig_inherited, :inherited
-    end
-
+    
     def self.inherited(klass)
       class << klass
-        attr_reader :__xni__, :__ffi__
-        alias_method :inherited, :__orig_inherited
+        attr_reader :__xni__, :__ffi__, :__xni_factory__
+        #alias_method :inherited, :__orig_inherited
         
         extend FFI::DataConverter
         native_type FFI::Type::POINTER
@@ -30,10 +27,10 @@ module XNI
       end
       
       def klass.new(*args, &b)
-        @__xni_factory__.new(*args, &b)
+        __xni_factory__.new(*args, &b)
       end
 
-      if extension = Util.extension(klass)
+      if (extension = Util.extension(klass)) && self == DataObject
         klass.instance_variable_set(:@__xni__, extension)
         
         cname = "xni_#{klass.to_s.split('::')[0..-2].join('_')}_sizeof_#{klass.to_s.split('::')[-1]}".downcase
@@ -43,14 +40,20 @@ module XNI
           klass.instance_variable_set :@__xni_factory__,  Factory.new(klass, size)
         end
       end
+      
+      if self != DataObject
+        klass.instance_variable_set(:@__ffi__, self.instance_variable_get(:@__ffi__))
+        klass.instance_variable_set(:@__xni__, self.instance_variable_get(:@__xni__))
+        klass.instance_variable_set(:@__xni_factory__, self.instance_variable_get(:@__xni_factory__))
+      end
     end
     
     def self.autorelease
-      @__xni_factory__.autorelease
+      __xni_factory__.autorelease
     end
     
     def self.retained
-      @__xni_factory__
+      __xni_factory__
     end
     
     def self.__xni_finalizer__(function)
@@ -74,6 +77,7 @@ module XNI
     
     def self.__xni_data_fields__(*fields)
       raise RuntimeError.new("data fields already specified") if defined?(@__xni_struct_class__)
+      fields = fields.each_slice(2).map { |f| [ f[0], TypeMap[ f[1]] ] }.flatten
       @__xni_struct_class__ = Class.new(FFI::Struct) { |c| c.layout *fields }
       @__xni_factory__ = Factory.new(self, @__xni_struct_class__, defined?(@__xni_finalizer__) ? @__xni_finalizer__ : nil)
     end
