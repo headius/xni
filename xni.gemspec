@@ -6,7 +6,8 @@ Gem::Specification.new do |s|
   s.homepage = 'http://wiki.github.com/wmeissner/xni'
   s.summary = 'X Native Interface'
   s.description = 'Native C access for Ruby VMs'
-  s.files = %w(xni.gemspec LICENSE README.md Rakefile) + Dir.glob('ext/**/*.[ch]') + Dir.glob("{spec,libtest}/**/*") 
+  s.files = %w(xni.gemspec LICENSE README.md Rakefile) + Dir.glob('ext/**/*.[ch]') + Dir.glob("{spec,libtest}/**/*")
+  s.files << Dir.glob('include/**/*.h')
   s.files << Dir.glob('lib/**/*.rb')
   s.files << Dir.glob('jruby-ext/**/*.java')
   s.has_rdoc = false
