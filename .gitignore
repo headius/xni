@@ -19,6 +19,7 @@ lib/ffi_c.so
 .idea
 *.iml
 /example/ext/example.h
+/example/ext/x86_64*
 /lib/xni/xni_ext.jar
 __xni*.cpp
 *.o

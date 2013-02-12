@@ -25,6 +25,10 @@ module Example
     
     # custom_finalizer indicates that before freeing the backing memory, it should call xni_#{class name}_finalize 
     custom_finalizer
+    
+    def inspect
+      "#<#{self.class} m_foo=#{m_foo} m_bar=#{m_bar}>"
+    end
   end
   
   class Bar < XNI::DataObject
