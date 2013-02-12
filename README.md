@@ -49,9 +49,21 @@ xni [![Build Status](https://travis-ci.org/wmeissner/xni.png)](https://travis-ci
         return foo->m_foo;
     }
     
-###### using it
+###### Using it
 
     jruby-1.7.3.dev :002 > foo = Example::Foo.new(1234)
     => #<Example::Foo m_foo=1234 m_bar=3133075469> 
     jruby-1.7.3.dev :003 > foo.foo
      => 1234     
+
+##### Supported types
+    :char, :uchar           - signed/unsigned char
+    :short, :ushort         - signed/unsigned short
+    :int, :uint             - signed/unsigned int
+    :long, :ulong           - signed/unsigned long
+    :long_long, :ulong_long - signed/unsigned long long
+    :float                  - float
+    :double                 - double
+    :pointer                - void *    
+    :cstring                - const char *
+    :void                   - void
