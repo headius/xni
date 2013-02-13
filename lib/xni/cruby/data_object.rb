@@ -11,7 +11,6 @@ module XNI
     def self.inherited(klass)
       class << klass
         attr_reader :__xni__, :__ffi__, :__xni_factory__
-        #alias_method :inherited, :__orig_inherited
         
         extend FFI::DataConverter
         native_type FFI::Type::POINTER
