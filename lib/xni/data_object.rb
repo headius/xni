@@ -31,6 +31,7 @@ module XNI
         fields.each_slice(2) do |name, type| 
           raise TypeError.new("unsupported data type, #{type} for field #{name}") unless ALLOWED_DATA_TYPES.include?(type)
         end
+        @__xni_fields__ = Hash[*fields]
         __xni_data_fields__ *fields
       end
 
@@ -41,6 +42,21 @@ module XNI
       def data_accessor(*fields)
         __xni_data_accessor__ *fields
       end
+      
+      public
+      def __xni_fields__
+        @__xni_fields__ ||= (superclass < DataObject) ? superclass.__xni_fields__ : {}
+      end
     end
+    
+    def inspect
+      fields_string = '' 
+      unless (fields = self.class.__xni_fields__).empty?
+        fields_string << ' ' << fields.each_key.map { |name| name.to_s + '=' + self.send(name).inspect }.join(', ')
+      end
+
+      "#<#{self.class}:#{__xni_struct__.pointer.address.to_s(16)}#{fields_string}>"
+    end
+    
   end
 end
