@@ -30,7 +30,7 @@ public class DataObjectMethod extends DynamicMethod implements CacheableMethod {
         arity.checkArity(context.runtime, args);
         IRubyObject[] nativeArgs = new IRubyObject[args.length + 2];
         nativeArgs[0] = extensionData.getNativeExtensionData();
-        nativeArgs[1] = ((DataObject) self).getStruct(context);
+        nativeArgs[1] = ((DataObject) self).getMemory(context);
         System.arraycopy(args, 0, nativeArgs, 2, args.length);
         return nativeMethod.call(context, self, klazz, methodName, nativeArgs);
     }
@@ -39,28 +39,28 @@ public class DataObjectMethod extends DynamicMethod implements CacheableMethod {
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName) {
         arity.checkArity(context.runtime, 0);
         return nativeMethod.call(context, self, klazz, methodName, 
-                extensionData.getNativeExtensionData(), ((DataObject) self).getStruct(context));
+                extensionData.getNativeExtensionData(), ((DataObject) self).getMemory(context));
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1) {
         arity.checkArity(context.runtime, 1);
         return nativeMethod.call(context, self, klazz, methodName, 
-                extensionData.getNativeExtensionData(), ((DataObject) self).getStruct(context), arg1);
+                extensionData.getNativeExtensionData(), ((DataObject) self).getMemory(context), arg1);
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1, IRubyObject arg2) {
         arity.checkArity(context.runtime, 2);
         return nativeMethod.call(context, self, klazz, methodName, 
-                new IRubyObject[] { extensionData.getNativeExtensionData(), ((DataObject) self).getStruct(context), arg1, arg2 });
+                new IRubyObject[] { extensionData.getNativeExtensionData(), ((DataObject) self).getMemory(context), arg1, arg2 });
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1, IRubyObject arg2, IRubyObject arg3) {
         arity.checkArity(context.runtime, 3);
         return nativeMethod.call(context, self, klazz, methodName,
-                new IRubyObject[] { extensionData.getNativeExtensionData(), ((DataObject) self).getStruct(context), arg1, arg2, arg3 });
+                new IRubyObject[] { extensionData.getNativeExtensionData(), ((DataObject) self).getMemory(context), arg1, arg2, arg3 });
     }
 
     @Override

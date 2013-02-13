@@ -131,5 +131,9 @@ module XNI
         @__xni_finalizer__.call(self.class.__xni__.__xni_ext_data__, struct) unless @__xni_finalizer__.nil?
       end
     end
+    
+    def __xni_address__
+      __xni_struct__.pointer.address
+    end
   end
 end

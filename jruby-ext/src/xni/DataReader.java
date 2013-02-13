@@ -1,6 +1,7 @@
 package xni;
 
 import org.jruby.RubyModule;
+import org.jruby.ext.ffi.StructLayout;
 import org.jruby.internal.runtime.methods.CallConfiguration;
 import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.Arity;
@@ -24,12 +25,13 @@ public final class DataReader extends DynamicMethod {
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule rubyModule, String methodName, IRubyObject[] args, Block block) {
         ARITY.checkArity(context.runtime, args);
-        return ((DataObject) self).getStruct(context).getFieldValue(context, fieldName);
+        return call(context, self, rubyModule, methodName);
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String name) {
-        return ((DataObject) self).getStruct(context).getFieldValue(context, fieldName);
+        DataObject obj = (DataObject) self;
+        return obj.getMetaData().getLayout().get(context, obj.getMemory(context), fieldName);
     }
 
     @Override

@@ -4,8 +4,7 @@ import jnr.ffi.util.ref.FinalizableReferenceQueue;
 import jnr.ffi.util.ref.FinalizableWeakReference;
 import org.jruby.*;
 import org.jruby.anno.JRubyMethod;
-import org.jruby.ext.ffi.AbstractMemory;
-import org.jruby.ext.ffi.Struct;
+import org.jruby.ext.ffi.*;
 import org.jruby.ext.ffi.jffi.Function;
 import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.Block;
@@ -33,12 +32,10 @@ public final class DataObject extends RubyObject {
 
 
     private final MetaData metaData;
+    private final Pointer memory;
     DataObject prev, next;
     private volatile int flags;
-    private volatile Struct struct;
-    private Finalizer finalizer;
-    private static final AtomicReferenceFieldUpdater<DataObject, Struct> STRUCT_UPDATER
-            = AtomicReferenceFieldUpdater.newUpdater(DataObject.class, Struct.class, "struct");
+    private final Finalizer finalizer;
 
     private static final AtomicIntegerFieldUpdater<DataObject> FLAGS_UPDATER
             = AtomicIntegerFieldUpdater.newUpdater(DataObject.class, "flags");
@@ -48,17 +45,36 @@ public final class DataObject extends RubyObject {
         private final CachingCallSite finalizerCallSite = new FunctionalCachingCallSite("call");
         private final IRubyObject finalizer;
         private final ExtensionData extensionData;
+        private final StructLayout layout;
 
         private MetaData(ExtensionData extensionData, RubyClass structClass, IRubyObject finalizer) {
             this.extensionData = extensionData;
             this.structClass = structClass;
             this.finalizer = finalizer;
+            this.layout = (StructLayout) structClass.callMethod("layout");
+        }
+
+        public StructLayout getLayout() {
+            return layout;
+        }
+        
+        public int getSize() {
+            return layout.getSize();
         }
     }
     
     DataObject(org.jruby.Ruby runtime, org.jruby.RubyClass klass, MetaData metaData) {
         super(runtime, klass);
         this.metaData = metaData;
+        this.memory =  new Pointer(runtime, org.jruby.ext.ffi.Factory.getInstance().allocateTransientDirectMemory(runtime, metaData.getSize(), 8, true));
+
+        Finalizer finalizer = null;
+        if (metaData.finalizer != null && !metaData.finalizer.isNil()) {
+            finalizer = new Finalizer(this, finalizerQueue, memory, metaData.finalizer, metaData.finalizerCallSite);
+            finalizers.put(finalizer, Boolean.TRUE);
+        }
+
+        this.finalizer = finalizer;
     }
     
     private static final IRubyObject getSize(Ruby runtime, RubyClass klass) {
@@ -104,7 +120,7 @@ public final class DataObject extends RubyObject {
     static final MetaData getMetaData(Ruby runtime, RubyClass klass) {
         RubyClass structClass = getStructClass(runtime, klass);
         ExtensionData extensionData = Extension.getExtensionData(runtime, klass.getInstanceVariable("@__xni__"));
-        return new MetaData((ExtensionData) extensionData, structClass,
+        return new MetaData(extensionData, structClass,
                 (IRubyObject) klass.getInternalVariable("__xni_finalizer__"));
 
     }
@@ -153,38 +169,14 @@ public final class DataObject extends RubyObject {
         }
     }
 
-    public final Struct getStruct(ThreadContext context) {
-        return struct != null ? struct : allocateStruct(context);
-    }
-    
     public final AbstractMemory getMemory(ThreadContext context) {
-        return getStruct(context).getMemory();
-    }
-    
-    private Struct allocateStruct(ThreadContext context) {
         if ((flags & RELEASED) != 0) {
             throw context.getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
         }
-
-        IRubyObject obj = metaData.structClass.newInstance(context, Block.NULL_BLOCK);
-        if (!(obj instanceof Struct)) {
-            throw context.getRuntime().newRuntimeError("structClass.newInstance() did not return instance of Struct");
-        }
         
-        if (STRUCT_UPDATER.compareAndSet(this, null, (Struct) obj)) {
-            if (metaData.finalizer != null && !metaData.finalizer.isNil()) {
-                finalizer = new Finalizer(this, finalizerQueue, struct, metaData.finalizer, metaData.finalizerCallSite);
-                finalizers.put(finalizer, Boolean.TRUE);
-            }
-        }
-        
-        return struct;
+        return memory;
     }
     
-    private AbstractMemory allocateMemory(ThreadContext context) {
-        return getStruct(context).getMemory();
-    }
-
     /**
      * Registers the DataObject class in the JRuby runtime.
      * @param runtime The JRuby runtime to register the new class in.
@@ -309,7 +301,7 @@ public final class DataObject extends RubyObject {
     @JRubyMethod(name = "__xni_sizeof__", visibility = Visibility.PRIVATE, module = true)
     public static IRubyObject sizeof(ThreadContext context, IRubyObject recv, IRubyObject obj) {
         if (obj instanceof DataObject) {
-            return ((DataObject) obj).getStruct(context).callMethod(context, "size");
+            return context.getRuntime().newFixnum(((DataObject) obj).metaData.getSize());
         }
         
         throw context.getRuntime().newTypeError(obj, context.getRuntime().getModule("XNI").getClass("DataObject"));
@@ -351,10 +343,6 @@ public final class DataObject extends RubyObject {
     //
     // Instance methods 
     //
-    @JRubyMethod(name = "__xni_struct__")
-    public IRubyObject __struct__(ThreadContext context) {
-        return getStruct(context);
-    }
 
     @JRubyMethod(name = "to_ptr")
     public IRubyObject to_ptr(ThreadContext context) {
@@ -393,30 +381,37 @@ public final class DataObject extends RubyObject {
         return context.getRuntime().getNil();
     }
 
+    @JRubyMethod(name = "__xni_address__")
+    public IRubyObject address(ThreadContext context) {
+        return memory.address(context);
+    }
+
 
     void release() {
         int f = flags;
         if ((f & RELEASED) == 0 && FLAGS_UPDATER.compareAndSet(this, f, f | RELEASED)) {
-            struct = null;
-
             if (finalizer != null) {
                 finalizer.finalizeReferent();
             }
         }
     }
+    
+    MetaData getMetaData() {
+        return metaData;
+    }
 
 
     private static final class Finalizer extends FinalizableWeakReference<Object> {
         private final CachingCallSite finalizerCallSite;
-        private final Struct struct;
+        private final Pointer memory;
         private final IRubyObject finalizer;
         private final ExtensionData extensionData;
         private final AtomicBoolean finalized = new AtomicBoolean();
 
-        private Finalizer(DataObject dataObject, FinalizableReferenceQueue queue, Struct struct, 
+        private Finalizer(DataObject dataObject, FinalizableReferenceQueue queue, Pointer memory, 
                           IRubyObject finalizer, CachingCallSite finalizerCallSite) {
             super(dataObject, queue);
-            this.struct = struct;
+            this.memory = memory;
             this.finalizer = finalizer;
             this.finalizerCallSite = finalizerCallSite;
             this.extensionData = dataObject.metaData.extensionData;
@@ -426,8 +421,8 @@ public final class DataObject extends RubyObject {
         public void finalizeReferent() {
             if (!finalized.getAndSet(true)) {
                 try {
-                    finalizerCallSite.call(struct.getRuntime().getCurrentContext(), finalizer, finalizer,
-                            extensionData.getNativeExtensionData(), struct.getMemory());
+                    finalizerCallSite.call(memory.getRuntime().getCurrentContext(), finalizer, finalizer,
+                            extensionData.getNativeExtensionData(), memory);
                 } finally {
                     finalizers.remove(this);
                 }

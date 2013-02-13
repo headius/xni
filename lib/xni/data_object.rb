@@ -55,7 +55,7 @@ module XNI
         fields_string << ' ' << fields.each_key.map { |name| name.to_s + '=' + self.send(name).inspect }.join(', ')
       end
 
-      "#<#{self.class}:#{__xni_struct__.pointer.address.to_s(16)}#{fields_string}>"
+      "#<#{self.class}:#{__xni_address__.to_s(16)}#{fields_string}>"
     end
     
   end

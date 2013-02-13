@@ -24,12 +24,13 @@ public final class DataWriter extends DynamicMethod {
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule rubyModule, String methodName, IRubyObject[] args, Block block) {
         ARITY.checkArity(context.runtime, args);
-        return ((DataObject) self).getStruct(context).setFieldValue(context, fieldName, args[0]);
+        return call(context, self, rubyModule, methodName, args[0]);
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String name, IRubyObject value) {
-        return ((DataObject) self).getStruct(context).setFieldValue(context, fieldName, value);
+        DataObject obj = (DataObject) self;
+        return obj.getMetaData().getLayout().put(context, obj.getMemory(context), fieldName, value);
     }
 
     @Override
