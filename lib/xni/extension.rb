@@ -29,10 +29,12 @@ module XNI
       __ffi__.ffi_lib XNI::Loader.find(name, caller[0].split(/:/)[0])
 
       load_address = __ffi__.ffi_libraries.first.find_symbol("xni_#{Util.module_cname(self)}_load")
-      load_stub = __ffi__.ffi_libraries.first.find_symbol("__xni_#{Util.module_cname(self)}_load")
-
-      if load_address && !load_address.null? && load_stub && !load_stub.null?
-        __xni_ext_data__ ExtensionData.new(FFI::Function.new(:pointer, [ :pointer ], load_stub).call(load_address))
+      if load_address && !load_address.null?
+        ref = FFI::MemoryPointer.new(:pointer)
+        result = FFI::Function.new(:int, [ :pointer, :pointer  ], load_address).call(nil, ref)
+        raise "extension #{name} failed to load" unless result.zero?
+        
+        __xni_ext_data__ ExtensionData.new(ref.read_pointer)
       else
         __xni_ext_data__ ExtensionData.new(FFI::Pointer::NULL)
       end

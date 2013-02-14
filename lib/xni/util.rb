@@ -61,7 +61,7 @@ module XNI
     end
     
     def self.stub_cname(mod, function)
-      '__xni_' + module_cname(mod) + '_' + function.to_s.sub(/\?$/, '_p')
+      'xni_' + module_cname(mod) + '_' + function.to_s.sub(/\?$/, '_p')
     end
     
     def self.stub_address(mod, name)

@@ -146,18 +146,37 @@ module XNI
           end
         end
 
+        f.puts <<-HIDDEN
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+        HIDDEN
+
         @structs.each_pair do |struct_class, fields|
           if fields.empty?
             mod_name = struct_class.to_s.split('::')[0..-2].join('_').downcase
             struct_name = struct_class.to_s.split('::')[-1].downcase
-            f.puts "XNI_EXPORT int xni_#{mod_name}_sizeof_#{struct_name}(void);"
+            f.puts "XNI_EXPORT int #{mod_name}_sizeof_#{struct_name}(void);"
           end
         end
-        
+
         @functions.each do |fn|
           param_string = fn[:params].empty? ? 'void' : fn[:params].map(&:cdecl).join(', ')
           f.puts "XNI_EXPORT #{fn[:result_type].cdecl} #{fn[:cname]}(#{param_string});"
         end
+
+        f.puts <<-HIDDEN
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
+        HIDDEN
+
+        mod_name = @mod.to_s.gsub('::', '_').downcase
+        f.puts <<-LOAD
+XNI_EXPORT int xni_#{mod_name}_load(RubyVM *,void **);
+XNI_EXPORT void xni_#{mod_name}_unload(RubyVM *, void *);
+        LOAD
+        
         f.puts <<-EPILOG
 
 #endif /* #{guard} */
@@ -193,11 +212,12 @@ ext_data(RubyEnv* rb)
           param_names = (0...fn[:params].drop(1).length).each_with_object([]) { |i, ary| ary << "a#{i}" }
           params_with_names = fn[:params].drop(1).each_with_object([]) { |p, ary| ary << "#{p.cdecl('a' + ary.length.to_s)}"}
           params_with_names.unshift('void* ext_data') 
+          
           f.puts <<-STUB
-extern "C" #{fn[:result_type].cdecl} __#{fn[:cname]}(#{params_with_names.join(', ')});
+extern "C" #{fn[:result_type].cdecl} xni_#{fn[:cname]}(#{params_with_names.join(', ')});
 
 extern "C" #{fn[:result_type].cdecl} 
-__#{fn[:cname]}(#{params_with_names.join(', ')}) 
+xni_#{fn[:cname]}(#{params_with_names.join(', ')}) 
 {
     RubyEnvImpl rb(ext_data);
     #{fn[:result_type].cdecl != 'void' ? 'return ' : ''}#{fn[:cname]}(#{param_names.unshift('&rb').join(', ')});
@@ -205,23 +225,21 @@ __#{fn[:cname]}(#{params_with_names.join(', ')})
 
           STUB
         end
-
-        mod_name = @mod.to_s.gsub('::', '_').downcase
-        f.puts <<-LOAD
-extern "C" void* __xni_#{mod_name}_load(void* (*load)(void));
-extern "C" void* __xni_#{mod_name}_load(void* (*load)(void)) 
-{
-    return (*load)();
-}
-
-extern "C" void __xni_#{mod_name}_unload(void (*unload)(void *), void* ext_data);
-extern "C" void __xni_#{mod_name}_unload(void (*unload)(void *), void* ext_data) 
-{
-    (*unload)(ext_data);
-}
-
-        LOAD
         
+        @structs.each_pair do |struct_class, fields|
+          if fields.empty?
+            mod_name = struct_class.to_s.split('::')[0..-2].join('_').downcase
+            struct_name = struct_class.to_s.split('::')[-1].downcase
+            f.puts <<-STUB
+extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void);
+extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
+{
+    return #{mod_name}_sizeof_#{struct_name}();
+}
+            STUB
+          end
+        end
+
       end
     end
   end
@@ -235,7 +253,7 @@ extern "C" void __xni_#{mod_name}_unload(void (*unload)(void *), void* ext_data)
 
     def native(name, params, rtype)
       mod_name = self.to_s.gsub('::', '_').downcase
-      cname = 'xni_' + mod_name + '_' + name.to_s
+      cname = mod_name + '_' + name.to_s
       XNI.exporter.attach(name, cname, find_type(rtype), params.map { |t| find_type(t) }.unshift(RubyEnv))
     end
 
@@ -291,12 +309,12 @@ extern "C" void __xni_#{mod_name}_unload(void (*unload)(void *), void* ext_data)
 
     def self.custom_finalizer
       class_name = self.to_s.gsub('::', '_').downcase
-      XNI.exporter.attach(name, "xni_#{class_name}_finalize", find_type(:void), [ RubyEnv, find_type(self) ])
+      XNI.exporter.attach(name, "#{class_name}_finalize", find_type(:void), [ RubyEnv, find_type(self) ])
     end
     
     def self.native(name, params, rtype)
       mod_name = self.to_s.gsub('::', '_').downcase
-      cname = 'xni_' + mod_name + '_' + name.to_s.sub(/\?$/, '_p')
+      cname = mod_name + '_' + name.to_s.sub(/\?$/, '_p')
       XNI.exporter.attach(name, cname, find_type(rtype), params.map { |t| find_type(t) }.unshift(find_type(self)).unshift(RubyEnv) )
     end
     

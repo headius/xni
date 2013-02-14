@@ -11,6 +11,13 @@
 #  define XNI_EXPORT
 #endif
 
+#define XNI_HIDDEN __attribute__((visibility("hidden")))
+#define XNI_VISIBLE __attribute__((visibility("default")))
+
+/* return XNI_OK or XNI_ERR from _load */
+#define XNI_OK (0)
+#define XNI_ERR (-1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,6 +52,8 @@ public:
         return ruby->ext_data(this); 
     }
 };
+
+typedef struct RubyVM_* RubyVM;
 
 #include <exception>
 #include <stdexcept>
