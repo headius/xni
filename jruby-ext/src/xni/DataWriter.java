@@ -34,7 +34,7 @@ public final class DataWriter extends DynamicMethod {
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String name, IRubyObject value) {
         DataObject obj = (DataObject) self;
-        op.put(context, obj.getMemory(context), offset, value);
+        op.put(context, obj.getMemory(), offset, value);
         
         return value;
     }

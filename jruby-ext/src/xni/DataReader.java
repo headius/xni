@@ -34,7 +34,7 @@ public final class DataReader extends DynamicMethod {
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String name) {
         DataObject obj = (DataObject) self;
-        return op.get(context, obj.getMemory(context), offset);
+        return op.get(context, obj.getMemory(), offset);
     }
 
     @Override

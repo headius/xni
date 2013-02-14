@@ -169,14 +169,6 @@ public final class DataObject extends RubyObject {
         }
     }
 
-    public final AbstractMemory getMemory(ThreadContext context) {
-        if ((flags & RELEASED) != 0) {
-            throw context.getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
-        }
-        
-        return memory;
-    }
-    
     /**
      * Registers the DataObject class in the JRuby runtime.
      * @param runtime The JRuby runtime to register the new class in.
@@ -406,7 +398,23 @@ public final class DataObject extends RubyObject {
             }
         }
     }
-    
+
+    public final AbstractMemory getMemory(ThreadContext context) {
+        if ((flags & RELEASED) != 0) {
+            throw context.getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
+        }
+
+        return memory;
+    }
+
+    final MemoryIO getMemory() {
+        if ((flags & RELEASED) != 0) {
+            throw getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
+        }
+
+        return memory.getMemoryIO();
+    }
+
     MetaData getMetaData() {
         return metaData;
     }
