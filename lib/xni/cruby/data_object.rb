@@ -11,18 +11,17 @@ module XNI
     def self.inherited(klass)
       class << klass
         attr_reader :__xni__, :__ffi__, :__xni_factory__
-        
-        extend FFI::DataConverter
-        native_type FFI::Type::POINTER
+      end
+      klass.extend FFI::DataConverter
+      klass.native_type FFI::Type::POINTER
 
-        def to_native(value, ctx = nil)
-          raise RuntimeError.new("object has been released") if value.__xni_struct__ == :released
-          value.__xni_struct__.pointer
-        end
+      def klass.to_native(value, ctx = nil)
+        raise RuntimeError.new("object has been released") if value.__xni_struct__ == :released
+        value.__xni_struct__.pointer
+      end
       
-        def from_native(value, ctx = nil)
-          raise RuntimeError.new("cannot convert native #{value} to instance of #{self}")
-        end
+      def klass.from_native(value, ctx = nil)
+        raise RuntimeError.new("cannot convert native #{value} to instance of #{self}")
       end
       
       def klass.new(*args, &b)

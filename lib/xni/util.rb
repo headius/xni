@@ -33,17 +33,18 @@ module XNI
       :double => FFI::Type::DOUBLE, 
       :pointer => FFI::Type::Mapped.new(Pointer), 
       :cstring  => FFI::Type.const_defined?(:TRANSIENT_STRING) ? FFI::Type.const_get(:TRANSIENT_STRING) : FFI::Type::Mapped.new(TransientString),
-      :void => FFI::Type::VOID
+      :void => FFI::Type::VOID,
+      :bool => FFI::Type::BOOL 
   }.freeze
   
   ALLOWED_RESULT_TYPES = [
       :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer, :cstring, :void
+      :float, :double, :pointer, :cstring, :void, :bool
   ]
 
   ALLOWED_PARAMETER_TYPES = [
       :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer, :cstring
+      :float, :double, :pointer, :cstring, :bool
   ]
 
   module Util
@@ -83,7 +84,7 @@ module XNI
       if ALLOWED_PARAMETER_TYPES.include?(type) && TypeMap.has_key?(type)
         return TypeMap[type]
         
-      elsif type.is_a?(DataObject)
+      elsif type.is_a?(Class) && type < DataObject
         return FFI::Type::Mapped.new(type)
       end
       

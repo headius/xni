@@ -9,7 +9,7 @@ module XNI
   class CompileTask < Rake::TaskLib
     DEFAULT_CFLAGS = %w(-fexceptions -O -fno-omit-frame-pointer -fno-strict-aliasing)
     DEFAULT_LDFLAGS = %w(-fexceptions)
-    XNI_INCDIR = File.join(File.dirname(__FILE__), '..', '..', 'include')
+    XNI_INCDIR = File.expand_path('../../include', File.dirname(__FILE__))
 
     attr_reader :cflags, :cxxflags, :ldflags, :libs, :platform
 

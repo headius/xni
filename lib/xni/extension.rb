@@ -43,9 +43,5 @@ module XNI
     def native(fn, params, rtype)
       __xni_define_method__ fn.to_s, Util.module_stub(self, fn, params, rtype), params.length
     end
-
-    def callback(*args)
-      __ffi__.callback(*args)
-    end
   end
 end

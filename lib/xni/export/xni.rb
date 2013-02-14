@@ -259,10 +259,6 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
 
     def extension(name)
     end
-    
-    def callback(params, rtype)
-      Callback.new(find_type(rtype), params.map { |t| find_type(t) })
-    end
   end
 
   class Struct

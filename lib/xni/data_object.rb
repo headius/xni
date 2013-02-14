@@ -9,7 +9,7 @@ end
 module XNI
   ALLOWED_DATA_TYPES = [
       :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer
+      :float, :double, :pointer, :bool
   ]
   
   def self.autoreleasepool(&b)
