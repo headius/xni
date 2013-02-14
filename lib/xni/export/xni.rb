@@ -292,7 +292,7 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
     extend TypeMapCache
 
     def self.inherited(klass)
-      XNI.exporter.add_struct(klass)
+      XNI.exporter.add_struct(klass) if self == DataObject
     end
     
     def self.data(*fields)
