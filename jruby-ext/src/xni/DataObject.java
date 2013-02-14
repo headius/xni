@@ -244,12 +244,23 @@ public final class DataObject extends RubyObject {
 
 
     private static IRubyObject data_accessors(ThreadContext context, IRubyObject self, IRubyObject[] args, boolean read, boolean write) {
+        StructLayout layout = (StructLayout) ((RubyClass) getStructIVar(context.getRuntime(), (RubyClass) self)).callMethod(context, "layout");
         for (IRubyObject o : args) {
             if (!(o instanceof RubySymbol)) {
                 throw context.getRuntime().newTypeError(o, context.getRuntime().getSymbol());
             }
-            if (read) ((RubyModule) self).addMethod(o.toString(), new DataReader((RubyModule) self, o));
-            if (write) ((RubyModule) self).addMethod(o.toString() + "=", new DataWriter((RubyModule) self, o));
+            
+            IRubyObject field = layout.callMethod(context, "[]", o);
+            Type fieldType = (Type) field.callMethod(context, "type");
+            
+            MemoryOp op = MemoryOp.getMemoryOp(fieldType);
+            if (op == null) {
+                throw context.getRuntime().newRuntimeError("unsupported type " + fieldType);
+            }
+            
+            int offset = (int) field.callMethod(context, "offset").convertToInteger().getLongValue();
+            if (read) ((RubyModule) self).addMethod(o.toString(), new DataReader((RubyModule) self, op, offset));
+            if (write) ((RubyModule) self).addMethod(o.toString() + "=", new DataWriter((RubyModule) self, op, offset));
         }
         return context.getRuntime().getNil();
     }
