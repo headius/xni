@@ -23,6 +23,7 @@ extern "C" {
 #endif
 
 struct RubyInterface_;
+typedef struct RubyVM_ RubyVM;
 
 #ifdef __cplusplus
   struct RubyEnv_;
@@ -52,8 +53,6 @@ public:
         return ruby->ext_data(this); 
     }
 };
-
-typedef struct RubyVM_* RubyVM;
 
 #include <exception>
 #include <stdexcept>
