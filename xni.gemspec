@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'xni'
-  s.version = '0.0.1.dev'
+  s.version = '0.0.1'
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/wmeissner/xni'
