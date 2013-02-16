@@ -30,17 +30,17 @@ xni [![Build Status](https://travis-ci.org/wmeissner/xni.png)](https://travis-ci
     
 ###### example.cpp
 
+    XNI_EXPORT unsigned long long
+    xni_example_foo(RubyEnv* rb)
+    {
+        return 0xfee1deadcafebabeLL;
+    }
+
     XNI_EXPORT void 
     xni_example_foo_initialize(RubyEnv* rb, struct Example_Foo* foo, int foo_value)
     {
         foo->m_bar = 0xbabef00dLL;
         foo->m_foo = foo_value;
-    }
-    
-    XNI_EXPORT unsigned long long
-    xni_example_foo(RubyEnv* rb)
-    {
-        return 0xfee1deadcafebabeLL;
     }
     
     XNI_EXPORT unsigned long long
