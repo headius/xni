@@ -92,13 +92,13 @@ module XNI
     end
     
     def self.module_stub(mod, name, params, rtype, options = {})
-      options = { :save_errno => false }.merge(options)
+      options = { :save_errno => false, :blocking => true }.merge(options)
       ffi_params = [ FFI::Type::POINTER ] + params.map { |t| param_type(t) }
       FFI::Function.new(result_type(rtype), ffi_params, stub_address(mod, name), options)
     end
 
     def self.instance_stub(mod, name, params, rtype, options = {})
-      options = { :save_errno => false }.merge(options)
+      options = { :save_errno => false, :blocking => true }.merge(options)
       ffi_params = [ FFI::Type::POINTER, FFI::Type::POINTER ] + params.map { |t| param_type(t) }
       FFI::Function.new(result_type(rtype), ffi_params, stub_address(mod, name), options)
     end
