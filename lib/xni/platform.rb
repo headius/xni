@@ -3,13 +3,14 @@ require 'ffi'
 module XNI
   class Platform
     LIBSUFFIX = FFI::Platform.mac? ? 'bundle' : FFI::Platform::LIBSUFFIX
+    LIBPREFIX = FFI::Platform.mac? ? '' : FFI::Platform::LIBPREFIX
 
     def self.system
       @@system ||= Platform.new
     end
 
     def map_library_name(name)
-      "#{FFI::Platform::LIBPREFIX}#{name}.#{LIBSUFFIX}"
+      "#{LIBPREFIX}#{name}.#{LIBSUFFIX}"
     end
 
     def arch
