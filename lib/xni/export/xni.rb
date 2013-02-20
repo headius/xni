@@ -62,6 +62,7 @@ module XNI
       :ulong => 'unsigned long',
       :long_long => 'long long',
       :ulong_long => 'unsigned long long',
+      :fixnum => 'fixnum',
       :float => 'float',
       :double => 'double',
       :pointer => 'void *',

@@ -29,6 +29,7 @@ module XNI
       :ulong => FFI::Type::ULONG, 
       :long_long => FFI::Type::LONG_LONG, 
       :ulong_long => FFI::Type::ULONG_LONG,
+      :fixnum => FFI::Type::LONG_LONG,
       :float => FFI::Type::FLOAT, 
       :double => FFI::Type::DOUBLE, 
       :pointer => FFI::Type::Mapped.new(Pointer), 
@@ -38,13 +39,17 @@ module XNI
   }.freeze
   
   ALLOWED_RESULT_TYPES = [
-      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer, :cstring, :void, :bool
+      :void, :fixnum, :double, :pointer, :cstring, :bool,
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long, :float
   ]
 
   ALLOWED_PARAMETER_TYPES = [
-      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer, :cstring, :bool
+      :fixnum, :double, :pointer, :cstring, :bool,
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long, :float, 
+  ]
+  
+  DEPRECATED_TYPES = [
+      :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long, :float
   ]
 
   module Util

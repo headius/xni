@@ -5,21 +5,21 @@ module Example
   extension 'example'
 
   # Attach xni_example_foo() as Example.foo
-  native :foo, [], :ulong_long
+  native :foo, [], :fixnum
    
   # A DataObject has native memory automatically allocated to hold the fields described by the 'data' directive
   class Foo < XNI::DataObject
-    data :m_foo, :ulong_long,
-         :m_bar, :ulong_long
+    data :m_foo, :fixnum,
+         :m_bar, :fixnum
     
     data_reader :m_bar
     data_accessor :m_foo
 
     # Attach a native function as Example::Foo#initialize
-    native :initialize, [ :int ], :void
+    native :initialize, [ :fixnum ], :void
     
     # Attach xni_example_foo_foo() as Example::Foo#foo
-    native :foo, [], :ulong_long
+    native :foo, [], :fixnum
     
     native :pointer, [], :pointer
     
@@ -34,7 +34,7 @@ module Example
     native :initialize, [], :void
 
     # Attach xni_example_foo_foo() as Example::Bar#bar
-    native :bar, [], :ulong_long    
+    native :bar, [], :fixnum    
   end
 end
 

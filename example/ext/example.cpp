@@ -20,7 +20,7 @@ xni_example_unload(RubyVM* vm, void* data)
 }
 
 XNI_EXPORT void
-example_foo_initialize(RubyEnv* rb, struct Example_Foo* foo, int foo_value)
+example_foo_initialize(RubyEnv* rb, struct Example_Foo* foo, fixnum foo_value)
 {
     foo->m_bar = 0xbabef00dLL;
     foo->m_foo = foo_value;
@@ -33,13 +33,13 @@ example_foo_finalize(RubyEnv* rb, struct Example_Foo* foo)
     printf("[C] finalizing native Example_Foo(%p) foo=%llx, bar=%llx\n", foo, foo->m_foo, foo->m_bar);
 }
 
-XNI_EXPORT unsigned long long
+XNI_EXPORT fixnum
 example_foo(RubyEnv* rb)
 {
     return 0xfee1deadcafebabeLL;
 }
 
-XNI_EXPORT unsigned long long
+XNI_EXPORT fixnum
 example_foo_foo(RubyEnv* rb, struct Example_Foo* foo)
 {
     return foo->m_foo;
@@ -81,9 +81,9 @@ example_bar_finalize(RubyEnv* rb, struct Example_Bar* bar)
 }
 
 
-XNI_EXPORT unsigned long long
+XNI_EXPORT fixnum
 example_bar_bar(RubyEnv* rb, struct Example_Bar* bar)
 {
     printf("[C] Example_Bar(%p)#bar ext_data=%p\n", bar, rb->ext_data());
-    return bar->bar;
+    return (fixnum) bar->bar;
 }

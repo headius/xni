@@ -18,6 +18,8 @@
 #define XNI_OK (0)
 #define XNI_ERR (-1)
 
+typedef signed long long fixnum;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -57,13 +57,9 @@ xni [![Build Status](https://travis-ci.org/wmeissner/xni.png)](https://travis-ci
      => 1234     
 
 ##### Supported types
-    :char, :uchar           - signed/unsigned char
-    :short, :ushort         - signed/unsigned short
-    :int, :uint             - signed/unsigned int
-    :long, :ulong           - signed/unsigned long
-    :long_long, :ulong_long - signed/unsigned long long
-    :float                  - float
-    :double                 - double
-    :pointer                - void *    
-    :cstring                - const char *
-    :void                   - void
+    :fixnum   - 64 bit signed integer
+    :double   - 64 bit floating point
+    :pointer  - void *    
+    :cstring  - const char *
+    :void     - void
+    :bool     - bool
