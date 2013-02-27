@@ -1,5 +1,4 @@
 require 'pathname'
-require 'ffi'
 require 'xni/platform'
 
 module XNI

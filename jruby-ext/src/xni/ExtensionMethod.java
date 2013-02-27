@@ -1,7 +1,7 @@
 package xni;
 
+import com.kenai.jffi.*;
 import org.jruby.RubyModule;
-import org.jruby.internal.runtime.methods.CacheableMethod;
 import org.jruby.internal.runtime.methods.CallConfiguration;
 import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.Arity;
@@ -13,60 +13,39 @@ import org.jruby.runtime.builtin.IRubyObject;
 /**
  *
  */
-public class ExtensionMethod extends DynamicMethod implements CacheableMethod {
+public class ExtensionMethod extends DynamicMethod {
     private final Arity arity;
     private final ExtensionData extensionData;
-    private final DynamicMethod nativeMethod;
+    private final Function function;
+    private final CallContext callContext;
 
-    public ExtensionMethod(RubyModule implementationClass, ExtensionData extensionData, DynamicMethod nativeMethod) {
+    public ExtensionMethod(RubyModule implementationClass, ExtensionData extensionData, Function function) {
         super(implementationClass, Visibility.PUBLIC, CallConfiguration.FrameNoneScopeNone);
-        this.arity = Arity.createArity(nativeMethod.getArity().getValue() - 2);
+        this.arity = Arity.createArity(function.getParameterCount());
         this.extensionData = extensionData;
-        this.nativeMethod = nativeMethod;
+        this.function = function;
+        com.kenai.jffi.Type resultType = function.getResultType().nativeType.jffiType();
+        com.kenai.jffi.Type[] parameterTypes = new com.kenai.jffi.Type[function.getParameterCount() + 1];
+        parameterTypes[0] = com.kenai.jffi.Type.POINTER;
+        for (int i = 0; i < function.getParameterCount(); i++) {
+            parameterTypes[i + 1] = function.getParameterType(i).nativeType.jffiType();
+        }
+        
+        callContext = CallContext.getCallContext(resultType, parameterTypes, CallingConvention.DEFAULT, false);
     }
 
     @Override
     public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject[] args, Block block) {
         arity.checkArity(context.runtime, args);
-        IRubyObject[] nativeArgs = new IRubyObject[args.length + 1];
-        nativeArgs[0] = extensionData.getNativeExtensionData();
-        System.arraycopy(args, 0, nativeArgs, 1, args.length);
-        return nativeMethod.call(context, self, klazz, methodName, nativeArgs);
-    }
-
-    @Override
-    public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName) {
-        arity.checkArity(context.runtime, 0);
-        return nativeMethod.call(context, self, klazz, methodName, extensionData.getNativeExtensionData());
-    }
-
-    @Override
-    public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1) {
-        arity.checkArity(context.runtime, 1);
-        return nativeMethod.call(context, self, klazz, methodName,  extensionData.getNativeExtensionData(), arg1);
-    }
-
-    @Override
-    public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1, IRubyObject arg2) {
-        arity.checkArity(context.runtime, 2);
-        return nativeMethod.call(context, self, klazz, methodName, extensionData.getNativeExtensionData(), arg1, arg2);
-    }
-
-    @Override
-    public IRubyObject call(ThreadContext context, IRubyObject self, RubyModule klazz, String methodName, IRubyObject arg1, IRubyObject arg2, IRubyObject arg3) {
-        arity.checkArity(context.runtime, 3);
-        return nativeMethod.call(context, self, klazz, methodName,
-                new IRubyObject[] { extensionData.getNativeExtensionData(), arg1, arg2, arg3 });
+        
+        HeapInvocationBuffer invocationBuffer = new HeapInvocationBuffer(callContext);
+        invocationBuffer.putAddress(extensionData.address());
+        
+        return BufferInvokeUtil.invoke(context, args, function, invocationBuffer, callContext);
     }
 
     @Override
     public DynamicMethod dup() {
         return this;
-    }
-
-    @Override
-    public DynamicMethod getMethodForCaching() {
-        return new ExtensionMethod(getImplementationClass(), extensionData,
-                nativeMethod instanceof CacheableMethod ? ((CacheableMethod) nativeMethod).getMethodForCaching() : nativeMethod);
     }
 }

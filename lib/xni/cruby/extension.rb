@@ -1,4 +1,5 @@
 require 'xni/cruby/extension_data'
+require 'xni/cruby/dynamic_library'
 
 module XNI
   module Extension
@@ -9,10 +10,10 @@ module XNI
       @__xni_ext_data__ = data
     end
 
-    def __xni_define_method__(name, function, param_count)
+    def __xni_define_method__(name, function)
       cname = Util.stub_cname(self, name)
-      function.attach(__ffi__, cname)
-      rb_params = (0...param_count).map { |i| "a#{i}" }
+      FFI::Function.new(function.result_type.ffi_type, [ FFI::Type::POINTER ] + function.parameter_types.map(&:ffi_type), function.address.ffi_pointer).attach(__ffi__, cname)
+      rb_params = (0...function.parameter_types.length).map { |i| "a#{i}" }
       c_params = %w(self.__xni_ext_data__) + rb_params
 
       instance_eval <<-EVAL

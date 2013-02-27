@@ -8,8 +8,9 @@ end
 
 module XNI
   ALLOWED_DATA_TYPES = [
+      :bool, :fixnum, :double, :pointer,
       :char, :uchar, :short, :ushort, :int, :uint, :long, :ulong, :long_long, :ulong_long,
-      :float, :double, :pointer, :bool
+      :float
   ]
   
   def self.autoreleasepool(&b)
@@ -24,15 +25,17 @@ module XNI
       end
 
       def native(fn, params, rtype, options = {})
-        __xni_define_method__ fn.to_s, Util.instance_stub(self, fn, params, rtype, options), params.length
+        __xni_define_method__ fn.to_s, Util.instance_stub(self, fn, params, rtype, options)
       end
 
       def data(*fields)
         fields.each_slice(2) do |name, type| 
           raise TypeError.new("unsupported data type, #{type} for field #{name}") unless ALLOWED_DATA_TYPES.include?(type)
         end
-        @__xni_fields__ = Hash[*fields]
-        __xni_data_fields__ *fields
+        
+        data_fields = fields.each_slice(2).map { |f|  [ f[0], TypeMap[f[1]]] }.flatten
+        @__xni_fields__ = Hash[*data_fields]
+        __xni_data_fields__ *data_fields
       end
 
       def data_reader(*fields)

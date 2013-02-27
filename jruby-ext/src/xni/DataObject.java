@@ -1,25 +1,25 @@
 package xni;
 
+import com.kenai.jffi.CallContext;
+import com.kenai.jffi.CallingConvention;
+import com.kenai.jffi.Invoker;
 import jnr.ffi.util.ref.FinalizableReferenceQueue;
 import jnr.ffi.util.ref.FinalizableWeakReference;
 import org.jruby.*;
 import org.jruby.anno.JRubyMethod;
-import org.jruby.ext.ffi.*;
-import org.jruby.ext.ffi.jffi.Function;
-import org.jruby.internal.runtime.methods.DynamicMethod;
-import org.jruby.runtime.Block;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.Visibility;
 import org.jruby.runtime.builtin.IRubyObject;
-import org.jruby.runtime.callsite.CachingCallSite;
-import org.jruby.runtime.callsite.FunctionalCachingCallSite;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
+import static xni.Util.align;
 
 /**
  *
@@ -32,7 +32,7 @@ public final class DataObject extends RubyObject {
 
 
     private final MetaData metaData;
-    private final Pointer memory;
+    private final jnr.ffi.Pointer memory;
     DataObject prev, next;
     private volatile int flags;
     private final Finalizer finalizer;
@@ -41,87 +41,73 @@ public final class DataObject extends RubyObject {
             = AtomicIntegerFieldUpdater.newUpdater(DataObject.class, "flags");
     
     static final class MetaData {
-        private final RubyClass structClass;
-        private final CachingCallSite finalizerCallSite = new FunctionalCachingCallSite("call");
-        private final IRubyObject finalizer;
+        private final Function finalizer;
         private final ExtensionData extensionData;
-        private final StructLayout layout;
+        private final Layout layout;
 
-        private MetaData(ExtensionData extensionData, RubyClass structClass, IRubyObject finalizer) {
+        private MetaData(ExtensionData extensionData, Layout layout, Function finalizer) {
             this.extensionData = extensionData;
-            this.structClass = structClass;
             this.finalizer = finalizer;
-            this.layout = (StructLayout) structClass.callMethod("layout");
+            this.layout = layout;
+            System.out.println("creating metadata with layout size=" + layout.size());
         }
 
-        public StructLayout getLayout() {
+        public Layout getLayout() {
             return layout;
         }
         
         public int getSize() {
-            return layout.getSize();
+            return layout.size();
         }
     }
     
     DataObject(org.jruby.Ruby runtime, org.jruby.RubyClass klass, MetaData metaData) {
         super(runtime, klass);
         this.metaData = metaData;
-        this.memory =  new Pointer(runtime, org.jruby.ext.ffi.Factory.getInstance().allocateTransientDirectMemory(runtime, metaData.getSize(), 8, true));
+        this.memory =  jnr.ffi.Memory.allocateDirect(jnr.ffi.Runtime.getSystemRuntime(), metaData.getSize());
 
         Finalizer finalizer = null;
         if (metaData.finalizer != null && !metaData.finalizer.isNil()) {
-            finalizer = new Finalizer(this, finalizerQueue, memory, metaData.finalizer, metaData.finalizerCallSite);
+            finalizer = new Finalizer(this, finalizerQueue, memory, metaData.finalizer);
             finalizers.put(finalizer, Boolean.TRUE);
         }
 
         this.finalizer = finalizer;
     }
     
-    private static final IRubyObject getSize(Ruby runtime, RubyClass klass) {
-        IRubyObject size = klass.getInstanceVariable("@__xni_size__");
-        if ((size == null || size.isNil()) && klass.getSuperClass() != null) {
+    private static final int getSize(Ruby runtime, RubyClass klass) {
+        Object size = klass.getInternalVariables().getInternalVariable("__xni_size__");
+        if (!(size instanceof Integer) && klass.getSuperClass() != null) {
             return getSize(runtime, klass.getSuperClass());
         }
         
-        return size != null ? size : runtime.getNil();
+        return size != null ? (Integer) size : 0;
     }
-    
-    private static IRubyObject getStructIVar(Ruby runtime, RubyClass klass) {
-        IRubyObject structClass = (IRubyObject) klass.getInternalVariable("__xni_struct_class__");
-        if ((structClass == null || structClass.isNil()) && klass.getSuperClass() != null) {
-            return getStructIVar(runtime, klass.getSuperClass());
-        }
-        
-        return structClass != null ? structClass : runtime.getNil();
-    }
-    
-    private static final RubyClass getStructClass(Ruby runtime, RubyClass klass) {
-        IRubyObject structClass, size;
-        if ((structClass = getStructIVar(runtime, klass)).isNil() && !(size = getSize(runtime, klass)).isNil()) {
-            
-            // This allocates sufficient 64 bit integers to fulfill the size requirement, to ensure 8 byte alignment 
-            IRubyObject[] fields = new IRubyObject[(((int) size.convertToInteger().getLongValue() + 7) / 8 * 2)];
-            IRubyObject paddingType = runtime.getModule("FFI").getClass("Type").getConstant("INT64");
-            for (int i = 0; i < fields.length; i += 2) {
-                fields[i] = runtime.newSymbol("pad" + (i / 2));
-                fields[i + 1] = paddingType;
-            }
-            
-            structClass = initStructClass(runtime, klass, fields);
-        }
-        
-        if (!(structClass instanceof RubyClass)) {
-            throw runtime.newRuntimeError("no data layout and no sizeof function for " + klass.getName());
+
+    private static Layout getLayoutIVar(Ruby runtime, RubyClass klass) {
+        Object layout = klass.getInternalVariable("__xni_layout__");
+        if (!(layout instanceof Layout) && klass.getSuperClass() != null) {
+            return getLayoutIVar(runtime, klass.getSuperClass());
         }
 
-        return (RubyClass) structClass;
+        return layout != null ? (Layout) layout : null;
+    }
+    
+    private static Layout getLayout(Ruby runtime, RubyClass klass) {
+        Layout layout;
+        int size;
+        if ((layout = getLayoutIVar(runtime, klass)) == null && (size = getSize(runtime, klass)) != 0) {
+            layout = new Layout(size);
+            klass.getInternalVariables().setInternalVariable("__xni_layout__", layout);
+        }
+        
+        return layout;
     }
 
     static final MetaData getMetaData(Ruby runtime, RubyClass klass) {
-        RubyClass structClass = getStructClass(runtime, klass);
+        Layout layout = getLayout(runtime, klass);
         ExtensionData extensionData = Extension.getExtensionData(runtime, klass.getInstanceVariable("@__xni__"));
-        return new MetaData(extensionData, structClass,
-                (IRubyObject) klass.getInternalVariable("__xni_finalizer__"));
+        return new MetaData(extensionData, layout, (Function) klass.getInternalVariable("__xni_finalizer__"));
 
     }
 
@@ -181,78 +167,49 @@ public final class DataObject extends RubyObject {
         
         klass.defineAnnotatedMethods(DataObject.class);
         klass.defineAnnotatedConstants(DataObject.class);
-        runtime.getLoadService().require("ffi");
-        klass.extend(new IRubyObject[]{ runtime.getModule("FFI").getConstant("DataConverter") });
         
         return klass;
     }
 
-    @JRubyMethod(name = "to_native", module = true)
-    public static IRubyObject to_native(ThreadContext context, IRubyObject self, IRubyObject value, IRubyObject ctx) {
-        if (value instanceof DataObject) {
-            return ((DataObject) value).getMemory(context);
-        }
-
-        throw context.getRuntime().newTypeError(value, context.getRuntime().getModule("XNI").getClass("DataObject"));
-    }
-
-    @JRubyMethod(name = "from_native", module = true)
-    public static IRubyObject from_native(ThreadContext context, IRubyObject self, IRubyObject value, IRubyObject ctx) {
-        throw context.getRuntime().newRuntimeError("cannot coerce native pointer to DataObject instance");
-    }
-
-    @JRubyMethod(name = "native_type", module = true)
-    public static IRubyObject native_type(ThreadContext context, IRubyObject self) {
-        return context.getRuntime().getModule("FFI").getClass("Type").getConstant("POINTER");
-    }
-
-    @JRubyMethod(name = "reference_required?", module = true)
-    public static IRubyObject reference_required_p(ThreadContext context, IRubyObject self) {
-        return context.getRuntime().getTrue();
-    }
-
-    private static RubyClass initStructClass(Ruby runtime, IRubyObject self, IRubyObject[] fields) {
-        RubyClass superClass = runtime.getModule("FFI").getClass("Struct");
-        RubyClass structClass = RubyClass.newClass(runtime, superClass, "Struct", superClass.getAllocator(), 
-                (RubyClass) self, true);
-        structClass.callMethod(runtime.getCurrentContext(), "layout", fields);
-        self.getInternalVariables().setInternalVariable("__xni_struct_class__", structClass);
-        
-        return structClass;
-    }
     
     @JRubyMethod(name = "__xni_data_fields__", visibility = Visibility.PRIVATE, module = true, rest=true)
     public static IRubyObject data_fields(ThreadContext context, IRubyObject self, IRubyObject[] fields) {
         Ruby runtime = context.getRuntime();
         
-        if (self.getInternalVariables().hasInternalVariable("__xni_struct_class__")) {
+        if (self.getInternalVariables().hasInternalVariable("__xni_layout__")) {
             throw runtime.newRuntimeError("data fields already specified");
         }
         
-        initStructClass(runtime, self, fields);
+        List<Layout.Field> dataFields = new ArrayList<Layout.Field>();
+        for (int i = 0, offset = 0; i < fields.length; i += 2) {
+            String name = fields[i].asJavaString();
+            Type type = (Type) fields[i + 1];
+            offset = align(offset, type.alignment());
+            dataFields.add(new Layout.Field(name, type, offset));
+            offset += type.size();
+        }
+        
+        self.getInternalVariables().setInternalVariable("__xni_layout__", new Layout(dataFields));
         
         return context.getRuntime().getNil();
     }
 
 
     private static IRubyObject data_accessors(ThreadContext context, IRubyObject self, IRubyObject[] args, boolean read, boolean write) {
-        StructLayout layout = (StructLayout) ((RubyClass) getStructIVar(context.getRuntime(), (RubyClass) self)).callMethod(context, "layout");
+        Layout layout = getLayout(context.getRuntime(), (RubyClass) self);
         for (IRubyObject o : args) {
             if (!(o instanceof RubySymbol)) {
                 throw context.getRuntime().newTypeError(o, context.getRuntime().getSymbol());
             }
             
-            IRubyObject field = layout.callMethod(context, "[]", o);
-            Type fieldType = (Type) field.callMethod(context, "type");
-            
-            MemoryOp op = MemoryOp.getMemoryOp(fieldType);
+            Layout.Field field = layout.getField(o.asJavaString());
+            MemoryOp op = MemoryOp.getMemoryOp(field.type);
             if (op == null) {
-                throw context.getRuntime().newRuntimeError("unsupported type " + fieldType);
+                throw context.getRuntime().newRuntimeError("unsupported type " + field.type);
             }
             
-            int offset = (int) field.callMethod(context, "offset").convertToInteger().getLongValue();
-            if (read) ((RubyModule) self).addMethod(o.toString(), new DataReader((RubyModule) self, op, offset));
-            if (write) ((RubyModule) self).addMethod(o.toString() + "=", new DataWriter((RubyModule) self, op, offset));
+            if (read) ((RubyModule) self).addMethod(o.toString(), new DataReader((RubyModule) self, op, field.offset));
+            if (write) ((RubyModule) self).addMethod(o.toString() + "=", new DataWriter((RubyModule) self, op, field.offset));
         }
         return context.getRuntime().getNil();
     }
@@ -269,13 +226,10 @@ public final class DataObject extends RubyObject {
 
 
     @JRubyMethod(name = "__xni_define_method__", visibility = Visibility.PRIVATE, module = true)
-    public static IRubyObject define_method(ThreadContext context, IRubyObject self, IRubyObject rbMethodName, IRubyObject rbFunction, IRubyObject parameterCount) {
-        Function function = (Function) rbFunction;
+    public static IRubyObject define_method(ThreadContext context, IRubyObject self, IRubyObject rbMethodName, IRubyObject rbFunction) {
 
-        DynamicMethod nativeMethod = function.createDynamicMethod((RubyModule) self);
-        nativeMethod.setName(rbMethodName.asJavaString());
         ExtensionData extData = Extension.getExtensionData(context.getRuntime(), self.getInstanceVariables().getInstanceVariable("@__xni__"));
-        DataObjectMethod method = new DataObjectMethod((RubyClass) self, extData, nativeMethod);
+        DataObjectMethod method = new DataObjectMethod((RubyClass) self, extData, (Function) rbFunction);
         method.setName(rbMethodName.asJavaString());
 
         ((RubyClass) self).addMethod(rbMethodName.asJavaString(), method);
@@ -301,12 +255,22 @@ public final class DataObject extends RubyObject {
         return context.getRuntime().getNil();
     }
 
+    @JRubyMethod(name = "__xni_set_size__", required = 1, visibility = Visibility.PRIVATE, module = true)
+    public static IRubyObject set_size(ThreadContext context, IRubyObject recv, IRubyObject function) {
+        CallContext callContext = CallContext.getCallContext(com.kenai.jffi.Type.SINT, new com.kenai.jffi.Type[0], 
+                CallingConvention.DEFAULT, false);
+        int size = (int) Invoker.getInstance().invokeN0(callContext, ((Function) function).address());
+        recv.getInternalVariables().setInternalVariable("__xni_size__", size);
+        
+        return context.getRuntime().getNil(); 
+    }
+
     @JRubyMethod(name = "__xni_sizeof__", visibility = Visibility.PRIVATE, module = true)
     public static IRubyObject sizeof(ThreadContext context, IRubyObject recv, IRubyObject obj) {
         if (obj instanceof DataObject) {
             return context.getRuntime().newFixnum(((DataObject) obj).metaData.getSize());
         }
-        
+
         throw context.getRuntime().newTypeError(obj, context.getRuntime().getModule("XNI").getClass("DataObject"));
     }
 
@@ -347,11 +311,6 @@ public final class DataObject extends RubyObject {
     // Instance methods 
     //
 
-    @JRubyMethod(name = "to_ptr")
-    public IRubyObject to_ptr(ThreadContext context) {
-        return getMemory(context);
-    }
-
     @JRubyMethod(name = "autorelease")
     public IRubyObject autorelease(ThreadContext context) {
         int f = flags;
@@ -386,9 +345,8 @@ public final class DataObject extends RubyObject {
 
     @JRubyMethod(name = "__xni_address__")
     public IRubyObject address(ThreadContext context) {
-        return memory.address(context);
+        return context.getRuntime().newFixnum(memory.address());
     }
-
 
     void release() {
         int f = flags;
@@ -399,40 +357,32 @@ public final class DataObject extends RubyObject {
         }
     }
 
-    public final AbstractMemory getMemory(ThreadContext context) {
-        if ((flags & RELEASED) != 0) {
-            throw context.getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
-        }
-
-        return memory;
-    }
-
-    final MemoryIO getMemory() {
-        if ((flags & RELEASED) != 0) {
-            throw getRuntime().newRuntimeError(inspect().asJavaString() + " has been released");
-        }
-
-        return memory.getMemoryIO();
-    }
-
     MetaData getMetaData() {
         return metaData;
+    }
+    
+    jnr.ffi.Pointer getMemory() {
+        return memory;
+    }
+    
+    long address() {
+        return memory.address();
     }
 
 
     private static final class Finalizer extends FinalizableWeakReference<Object> {
-        private final CachingCallSite finalizerCallSite;
-        private final Pointer memory;
-        private final IRubyObject finalizer;
+        private static final CallContext callContext = CallContext.getCallContext(com.kenai.jffi.Type.VOID, 
+                new com.kenai.jffi.Type[] { com.kenai.jffi.Type.POINTER, com.kenai.jffi.Type.POINTER }, CallingConvention.DEFAULT, false);
+        private final jnr.ffi.Pointer memory;
+        private final Function finalizer;
         private final ExtensionData extensionData;
         private final AtomicBoolean finalized = new AtomicBoolean();
 
-        private Finalizer(DataObject dataObject, FinalizableReferenceQueue queue, Pointer memory, 
-                          IRubyObject finalizer, CachingCallSite finalizerCallSite) {
+        private Finalizer(DataObject dataObject, FinalizableReferenceQueue queue, jnr.ffi.Pointer memory, 
+                          Function finalizer) {
             super(dataObject, queue);
             this.memory = memory;
             this.finalizer = finalizer;
-            this.finalizerCallSite = finalizerCallSite;
             this.extensionData = dataObject.metaData.extensionData;
         }
 
@@ -440,8 +390,7 @@ public final class DataObject extends RubyObject {
         public void finalizeReferent() {
             if (!finalized.getAndSet(true)) {
                 try {
-                    finalizerCallSite.call(memory.getRuntime().getCurrentContext(), finalizer, finalizer,
-                            extensionData.getNativeExtensionData(), memory);
+                    Invoker.getInstance().invokeN2(callContext, finalizer.address(), extensionData.address(), memory.address());
                 } finally {
                     finalizers.remove(this);
                 }

@@ -1,11 +1,14 @@
 package xni;
 
+import com.kenai.jffi.CallContext;
+import com.kenai.jffi.CallingConvention;
+import com.kenai.jffi.Type;
+import jnr.ffi.Memory;
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
 import org.jruby.RubyModule;
 import org.jruby.RubyObject;
 import org.jruby.anno.JRubyMethod;
-import org.jruby.ext.ffi.Pointer;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -14,9 +17,13 @@ import org.jruby.runtime.builtin.IRubyObject;
  *
  */
 public class ExtensionData extends RubyObject {
-    private final Pointer nativeExtensionData;
+    private static final CallContext loadContext = CallContext.getCallContext(com.kenai.jffi.Type.SINT, new Type[] { Type.POINTER, com.kenai.jffi.Type.POINTER },
+            CallingConvention.DEFAULT, false);
+    private static final CallContext unloadContext = CallContext.getCallContext(com.kenai.jffi.Type.VOID, new Type[] { Type.POINTER, com.kenai.jffi.Type.POINTER },
+            CallingConvention.DEFAULT, false);
+    private final jnr.ffi.Pointer nativeExtensionData;
     
-    public ExtensionData(Ruby runtime, RubyClass metaClass, Pointer nativeExtensionData) {
+    public ExtensionData(Ruby runtime, RubyClass metaClass, jnr.ffi.Pointer nativeExtensionData) {
         super(runtime, metaClass);
         this.nativeExtensionData = nativeExtensionData;
     }
@@ -33,16 +40,22 @@ public class ExtensionData extends RubyObject {
     }
 
     @JRubyMethod(name = { "new" }, meta = true)
-    public static IRubyObject newInstance(ThreadContext context, IRubyObject recv, IRubyObject pointer) {
-        return new ExtensionData(context.getRuntime(), (RubyClass) recv, (Pointer) pointer);
+    public static IRubyObject newInstance(ThreadContext context, IRubyObject recv, IRubyObject load, IRubyObject unload) {
+        jnr.ffi.Pointer memory = Memory.allocateDirect(jnr.ffi.Runtime.getSystemRuntime(), jnr.ffi.NativeType.ADDRESS);
+        if (!load.isNil()) {
+            long res = com.kenai.jffi.Invoker.getInstance().invokeN2(loadContext, ((DynamicLibrary.Symbol) load).address(),
+                    0L, memory.address());
+
+            if (res < 0) {
+                throw context.getRuntime().newLoadError(((DynamicLibrary.Symbol) load).name() 
+                        + " failed with error code " + res);
+            }
+        }
+
+        return new ExtensionData(context.getRuntime(), (RubyClass) recv, memory.getPointer(0));
     }
     
-    Pointer getNativeExtensionData() {
-        return nativeExtensionData;
-    }
-
-    @JRubyMethod(name = { "pointer", "to_ptr" })
-    public IRubyObject pointer(ThreadContext context) {
-        return nativeExtensionData;
+    long address() {
+        return nativeExtensionData.address();
     }
 }

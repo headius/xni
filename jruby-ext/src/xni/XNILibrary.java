@@ -15,6 +15,10 @@ public class XNILibrary implements org.jruby.runtime.load.Library {
             throw runtime.newLoadError("Native API access is disabled");
         }
         RubyModule xni = runtime.getOrCreateModule("XNI");
+        Type.createTypeClass(runtime, xni);
+        Pointer.createPointerClass(runtime, xni);
+        Function.createFunctionClass(runtime, xni);
+        DynamicLibrary.createDynamicLibraryClass(runtime, xni);
         ExtensionData.createExtensionDataClass(runtime, xni);
         Extension.createExtensionModule(runtime, xni);
         AutoReleasePool.createAutoReleasePoolClass(runtime, xni);

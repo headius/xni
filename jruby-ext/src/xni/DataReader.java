@@ -1,8 +1,6 @@
 package xni;
 
 import org.jruby.RubyModule;
-import org.jruby.ext.ffi.StructLayout;
-import org.jruby.ext.ffi.Type;
 import org.jruby.internal.runtime.methods.CallConfiguration;
 import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.Arity;

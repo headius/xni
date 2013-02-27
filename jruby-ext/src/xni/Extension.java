@@ -1,11 +1,8 @@
 package xni;
 
 import org.jruby.Ruby;
-import org.jruby.RubyClass;
 import org.jruby.RubyModule;
 import org.jruby.anno.JRubyMethod;
-import org.jruby.ext.ffi.jffi.Function;
-import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.Visibility;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -31,12 +28,8 @@ public class Extension {
 
     @JRubyMethod(name = "__xni_define_method__", visibility = Visibility.PRIVATE, module=true)
     public static IRubyObject define_method(ThreadContext context, IRubyObject self, IRubyObject rbMethodName, 
-                                            IRubyObject rbFunction, IRubyObject parameterCount) {
-        Function function = (Function) rbFunction;
-
-        DynamicMethod nativeMethod = function.createDynamicMethod((RubyModule) self);
-        nativeMethod.setName(rbMethodName.asJavaString());
-        ExtensionMethod method = new ExtensionMethod(self.getSingletonClass(), getExtensionData(context.getRuntime(), self), nativeMethod);
+                                            IRubyObject rbFunction) {
+        ExtensionMethod method = new ExtensionMethod(self.getSingletonClass(), getExtensionData(context.getRuntime(), self), (Function) rbFunction);
 
         self.getSingletonClass().addMethod(rbMethodName.asJavaString(), method);
         return context.nil;

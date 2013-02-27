@@ -32,9 +32,9 @@ module XNI
         klass.instance_variable_set(:@__xni__, extension)
         
         cname = "xni_#{klass.to_s.split('::')[0..-2].join('_')}_sizeof_#{klass.to_s.split('::')[-1]}".downcase
-        address = extension.__ffi__.ffi_libraries.first.find_symbol(cname)
-        if address && !address.null?
-          klass.instance_variable_set :@__xni_size__, size = FFI::Function.new(:int, [], address, :save_errno => false).call
+        address = extension.__xni_library__.find_function(cname)
+        if address
+          klass.instance_variable_set :@__xni_size__, size = FFI::Function.new(:int, [], address.ffi_pointer, :save_errno => false).call
           klass.instance_variable_set :@__xni_factory__,  Factory.new(klass, size)
         end
       end
@@ -59,11 +59,11 @@ module XNI
       @__xni_factory__.finalizer = function if defined?(@__xni_factory__)
     end
 
-    def self.__xni_define_method__(name, function, param_count)
+    def self.__xni_define_method__(name, function)
       cname = Util.stub_cname(self, name)
-      function.attach(__xni__.__ffi__, cname)
+      FFI::Function.new(function.result_type.ffi_type, [ FFI::Type::POINTER, FFI::Type::POINTER  ] + function.parameter_types.map(&:ffi_type), function.address.ffi_pointer).attach(__xni__.__ffi__, cname)
       
-      rb_params = (0...param_count).map { |i| "a#{i}" }
+      rb_params = (0...function.parameter_types.length).map { |i| "a#{i}" }
       c_params = %w(self.class.__xni__.__xni_ext_data__ __xni_struct__) + rb_params
       
       class_eval <<-EVAL
@@ -75,7 +75,7 @@ module XNI
     
     def self.__xni_data_fields__(*fields)
       raise RuntimeError.new("data fields already specified") if defined?(@__xni_struct_class__)
-      fields = fields.each_slice(2).map { |f| [ f[0], TypeMap[ f[1]] ] }.flatten
+      fields = fields.each_slice(2).map { |f| [ f[0], TypeMap[ f[1]].ffi_type ] }.flatten
       @__xni_struct_class__ = Class.new(FFI::Struct) { |c| c.layout *fields }
       @__xni_factory__ = Factory.new(self, @__xni_struct_class__, defined?(@__xni_finalizer__) ? @__xni_finalizer__ : nil)
     end

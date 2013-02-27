@@ -19,9 +19,6 @@
 package xni;
 
 import org.jruby.*;
-import org.jruby.ext.ffi.Type;
-import org.jruby.javasupport.JavaObject;
-import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import java.math.BigInteger;
@@ -33,35 +30,35 @@ import java.nio.ByteOrder;
  */
 public final class Util {
     private Util() {}
-    public static final byte int8Value(IRubyObject parameter) {
+    public static final byte int8Value(Object parameter) {
         return (byte) longValue(parameter);
     }
 
-    public static final short uint8Value(IRubyObject parameter) {
+    public static final short uint8Value(Object parameter) {
         return (short) longValue(parameter);
     }
 
-    public static final short int16Value(IRubyObject parameter) {
+    public static final short int16Value(Object parameter) {
         return (short) longValue(parameter);
     }
     
-    public static final int uint16Value(IRubyObject parameter) {
+    public static final int uint16Value(Object parameter) {
         return (int) longValue(parameter);
     }
 
-    public static final int int32Value(IRubyObject parameter) {
+    public static final int int32Value(Object parameter) {
         return (int) longValue(parameter);
     }
 
-    public static final long uint32Value(IRubyObject parameter) {
+    public static final long uint32Value(Object parameter) {
         return longValue(parameter);
     }
 
-    public static final long int64Value(IRubyObject parameter) {
+    public static final long int64Value(Object parameter) {
         return longValue(parameter);
     }
 
-    public static final long uint64Value(IRubyObject parameter) {
+    public static final long uint64Value(Object parameter) {
         final long value = parameter instanceof RubyBignum
                 ? ((RubyBignum) parameter).getValue().longValue()
                 :longValue(parameter);
@@ -76,6 +73,10 @@ public final class Util {
         return RubyNumeric.num2dbl(parameter);
     }
 
+    public static final double doubleValue(Object value) {
+        return value instanceof RubyFloat ? ((RubyFloat) value).getDoubleValue() : RubyNumeric.num2dbl((IRubyObject) value);
+    }
+
     /**
      * Converts characters like 'a' or 't' to an integer value
      *
@@ -84,6 +85,10 @@ public final class Util {
      */
     public static final long longValue(IRubyObject parameter) {
         return RubyNumeric.num2long(parameter);
+    }
+
+    public static final long longValue(Object value) {
+        return value instanceof RubyFixnum ? ((RubyFixnum) value).getLongValue() : RubyNumeric.num2long((IRubyObject) value);
     }
 
     public static int intValue(IRubyObject obj, RubyHash enums) {
@@ -136,34 +141,10 @@ public final class Util {
                     : runtime.newFixnum(value);
     }
 
-    public static final ByteBuffer slice(ByteBuffer buf, int offset) {
-        ByteBuffer tmp = buf.duplicate();
-        tmp.position(offset);
-        return tmp.slice();
-    }
-
     public static final void checkBounds(Ruby runtime, long size, long off, long len) {
         if ((off | len | (off + len) | (size - (off + len))) < 0) {
             throw runtime.newIndexError("memory access offset="
                     + off + " size=" + len + " is out of bounds");
-        }
-    }
-
-    public static ByteOrder parseByteOrder(Ruby runtime, IRubyObject byte_order) {
-        if (byte_order instanceof RubySymbol || byte_order instanceof RubyString) {
-            String orderName = byte_order.asJavaString();
-            if ("network".equals(orderName) || "big".equals(orderName)) {
-                return ByteOrder.BIG_ENDIAN;
-
-            } else if ("little".equals(orderName)) {
-                return ByteOrder.LITTLE_ENDIAN;
-            
-            } else {
-                return ByteOrder.nativeOrder();
-            }
-
-        } else {
-            throw runtime.newTypeError(byte_order, runtime.getSymbol());
         }
     }
 
@@ -177,5 +158,9 @@ public final class Util {
         v |= v >> 16;
 
         return v + 1;
+    }
+    
+    public static int align(int offset, int align) {
+        return align + ((offset - 1) & ~(align - 1));
     }
 }

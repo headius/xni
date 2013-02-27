@@ -13,9 +13,8 @@ module XNI
       if (extension = Util.extension(klass)) && self == DataObject
         klass.instance_variable_set(:@__xni__, extension)
         cname = "xni_#{klass.to_s.split('::')[0..-2].join('_')}_sizeof_#{klass.to_s.split('::')[-1]}".downcase
-        address = extension.__ffi__.ffi_libraries.first.find_symbol(cname)
-        if address && !address.null?
-          klass.instance_variable_set :@__xni_size__, size = FFI::Function.new(:int, [], address, :save_errno => false).call
+        if address = extension.__xni__.__xni_library__.find_function(cname)
+          __xni_set_size__ XNI::Function.new(address, XNI::Type::SINT, [])
         end
       end
     end       
