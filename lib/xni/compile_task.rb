@@ -7,7 +7,7 @@ require 'xni/platform'
 
 module XNI
   class CompileTask < Rake::TaskLib
-    DEFAULT_CFLAGS = %w(-fexceptions -O -fno-omit-frame-pointer -fno-strict-aliasing)
+    DEFAULT_CFLAGS = %w(-fexceptions -O2 -fno-omit-frame-pointer -fno-strict-aliasing)
     DEFAULT_LDFLAGS = %w(-fexceptions)
     XNI_INCDIR = File.expand_path('../../include', File.dirname(__FILE__))
 
@@ -23,7 +23,7 @@ module XNI
       @headers = []
       @functions = []
       @cflags = DEFAULT_CFLAGS.dup
-      @cxxflags = DEFAULT_CFLAGS.dup
+      @cxxflags = []
       @ldflags = DEFAULT_LDFLAGS.dup
       @libs = []
       @platform = Platform.system
@@ -113,14 +113,15 @@ module XNI
 
       src_files.each do |src|
         obj_file = File.join(out_dir, src.sub(/\.(c|cpp)$/, '.o').sub(/^#{@ext_dir}\//, ''))
+        extra_opts = src =~ /__xni_/ ? ' -fomit-frame-pointer ' : '' 
         if src =~ /\.c$/
           file obj_file => [src, File.dirname(obj_file)] do |t|
-            sh "#{cc} #{cflags} -o #{t.name} -c #{t.prerequisites[0]}"
+            sh "#{cc} #{cflags}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
           end
 
         else
           file obj_file => [src, File.dirname(obj_file)] do |t|
-            sh "#{cxx} #{cxxflags} -o #{t.name} -c #{t.prerequisites[0]}"
+            sh "#{cxx} #{cxxflags}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
           end
         end
 
