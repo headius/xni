@@ -36,7 +36,9 @@ example_foo_finalize(RubyEnv* rb, struct Example_Foo* foo)
 XNI_EXPORT fixnum
 example_foo(RubyEnv* rb)
 {
-    return 0xfee1deadcafebabeLL;
+    fixnum retval = 0xfee1deadcafebabeLL;
+    printf("[C] Example.foo ext_data=%p returning %llx\n", rb->ext_data(), retval);
+    return retval;
 }
 
 XNI_EXPORT fixnum
