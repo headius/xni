@@ -14,8 +14,8 @@ import xni.Util;
  */
 public class DoubleArrayParameterConverter implements ToNativeConverter<IRubyObject, double[]> {
     private static final DoubleArrayParameterConverter IN = new DoubleArrayParameterConverter(ArrayFlags.IN);
-    private static final DoubleArrayParameterConverter OUT = new DoubleArrayParameterConverter(ArrayFlags.OUT);
-    private static final DoubleArrayParameterConverter INOUT = new DoubleArrayParameterConverter(ArrayFlags.IN | ArrayFlags.OUT);
+    private static final DoubleArrayParameterConverter OUT = new DoubleArrayParameterConverter.Out(ArrayFlags.OUT);
+    private static final DoubleArrayParameterConverter INOUT = new DoubleArrayParameterConverter.Out(ArrayFlags.IN | ArrayFlags.OUT);
     
     protected final int arrayFlags;
 

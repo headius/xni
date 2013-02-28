@@ -14,8 +14,8 @@ import xni.Util;
  */
 public class Signed32ArrayParameterConverter implements ToNativeConverter<IRubyObject, int[]> {
     private static final Signed32ArrayParameterConverter IN = new Signed32ArrayParameterConverter(ArrayFlags.IN);
-    private static final Signed32ArrayParameterConverter OUT = new Signed32ArrayParameterConverter(ArrayFlags.OUT);
-    private static final Signed32ArrayParameterConverter INOUT = new Signed32ArrayParameterConverter(ArrayFlags.IN | ArrayFlags.OUT);
+    private static final Signed32ArrayParameterConverter OUT = new Signed32ArrayParameterConverter.Out(ArrayFlags.OUT);
+    private static final Signed32ArrayParameterConverter INOUT = new Signed32ArrayParameterConverter.Out(ArrayFlags.IN | ArrayFlags.OUT);
     
     protected final int arrayFlags;
 
