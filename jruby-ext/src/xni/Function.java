@@ -7,10 +7,7 @@ import org.jruby.anno.JRubyMethod;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
-import xni.converters.DataObjectParameterConverter;
-import xni.converters.DoubleArrayParameterConverter;
-import xni.converters.Signed32ArrayParameterConverter;
-import xni.converters.Signed64ArrayParameterConverter;
+import xni.converters.*;
 
 /**
  *
@@ -107,6 +104,9 @@ public class Function extends RubyObject {
         } else if (type instanceof Type.CArray) {
             Type.CArray arrayType = (Type.CArray) type;
             switch (arrayType.getComponentType().getNativeType()) {
+                case BOOL:
+                    return BoolArrayParameterConverter.getInstance(arrayType.flags());
+                
                 case SINT:
                     return Signed32ArrayParameterConverter.getInstance(arrayType.flags());
                 
@@ -125,6 +125,7 @@ public class Function extends RubyObject {
         switch (nativeType) {
             case SCHAR:
             case UCHAR:
+            case BOOL:
                 return ObjectParameterInfo.ComponentType.BYTE;
 
             case SSHORT:
