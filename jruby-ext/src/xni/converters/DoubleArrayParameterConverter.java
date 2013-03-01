@@ -30,10 +30,6 @@ public class DoubleArrayParameterConverter implements ToNativeConverter<IRubyObj
     @Override
     public double[] toNative(IRubyObject value, ToNativeContext context) {
         RubyArray rbArray = value.convertToArray();
-        if (value.isNil()) {
-            return null;
-        }
-
         double[] arr = new double[rbArray.getLength()];
         
         if (ArrayFlags.isIn(arrayFlags)) {

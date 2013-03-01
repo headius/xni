@@ -30,10 +30,6 @@ public class Signed32ArrayParameterConverter implements ToNativeConverter<IRubyO
     @Override
     public int[] toNative(IRubyObject value, ToNativeContext context) {
         RubyArray rbArray = value.convertToArray();
-        if (value.isNil()) {
-            return null;
-        }
-
         int[] arr = new int[rbArray.getLength()];
         
         if (ArrayFlags.isIn(arrayFlags)) {

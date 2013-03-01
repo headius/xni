@@ -30,10 +30,6 @@ public class Signed64ArrayParameterConverter implements ToNativeConverter<IRubyO
     @Override
     public long[] toNative(IRubyObject value, ToNativeContext context) {
         RubyArray rbArray = value.convertToArray();
-        if (value.isNil()) {
-            return null;
-        }
-
         long[] arr = new long[rbArray.getLength()];
         
         if (ArrayFlags.isIn(arrayFlags)) {
