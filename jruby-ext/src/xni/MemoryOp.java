@@ -75,12 +75,6 @@ abstract class MemoryOp {
                 return FLOAT32;
             case DOUBLE:
                 return FLOAT64;
-            case SLONG:
-                return jnr.ffi.Runtime.getSystemRuntime().longSize() == 4
-                        ? getMemoryOp(NativeType.SINT, order) : getMemoryOp(NativeType.SLONG_LONG, order);
-            case ULONG:
-                return jnr.ffi.Runtime.getSystemRuntime().longSize() == 4
-                        ? getMemoryOp(NativeType.UINT, order) : getMemoryOp(NativeType.ULONG_LONG, order);
             case ADDRESS:
                 return POINTER;
             default:

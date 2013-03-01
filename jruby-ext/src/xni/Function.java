@@ -134,12 +134,6 @@ public class Function extends RubyObject {
             case SINT:
             case UINT:
                 return ObjectParameterInfo.ComponentType.INT;
-
-            case SLONG:
-            case ULONG:
-                return jnr.ffi.Runtime.getSystemRuntime().longSize() == 4
-                        ? ObjectParameterInfo.ComponentType.LONG 
-                        : ObjectParameterInfo.ComponentType.INT;
             
             case SLONG_LONG:
             case ULONG_LONG:

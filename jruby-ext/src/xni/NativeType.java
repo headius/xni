@@ -92,8 +92,6 @@ public enum NativeType {
         m.put(USHORT, com.kenai.jffi.Type.USHORT);
         m.put(SINT, com.kenai.jffi.Type.SINT);
         m.put(UINT, com.kenai.jffi.Type.UINT);
-        m.put(SLONG, com.kenai.jffi.Type.SLONG);
-        m.put(ULONG, com.kenai.jffi.Type.ULONG);
         m.put(SLONG_LONG, com.kenai.jffi.Type.SINT64);
         m.put(ULONG_LONG, com.kenai.jffi.Type.UINT64);
         m.put(FLOAT, com.kenai.jffi.Type.FLOAT);
@@ -122,8 +120,6 @@ public enum NativeType {
             case UINT:
             case SLONG_LONG:
             case ULONG_LONG:
-            case SLONG:
-            case ULONG:
             case FLOAT:
             case DOUBLE:
             case ADDRESS:

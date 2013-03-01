@@ -19,8 +19,6 @@ module XNI
       :ushort => XNI::Type::USHORT, 
       :int => XNI::Type::SINT, 
       :uint => XNI::Type::UINT, 
-      :long => XNI::Type::SLONG, 
-      :ulong => XNI::Type::ULONG, 
       :long_long => XNI::Type::SLONG_LONG, 
       :ulong_long => XNI::Type::ULONG_LONG,
       :fixnum => XNI::Type::SLONG_LONG,

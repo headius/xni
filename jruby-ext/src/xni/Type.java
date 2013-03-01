@@ -44,8 +44,6 @@ public class Type extends RubyObject {
         defineBuiltinType(runtime, builtinClass, NativeType.UINT);
         defineBuiltinType(runtime, builtinClass, NativeType.SLONG_LONG);
         defineBuiltinType(runtime, builtinClass, NativeType.ULONG_LONG);
-        defineBuiltinType(runtime, builtinClass, NativeType.SLONG);
-        defineBuiltinType(runtime, builtinClass, NativeType.ULONG);
         defineBuiltinType(runtime, builtinClass, NativeType.FLOAT);
         defineBuiltinType(runtime, builtinClass, NativeType.DOUBLE);
         defineBuiltinType(runtime, builtinClass, NativeType.BOOL);
