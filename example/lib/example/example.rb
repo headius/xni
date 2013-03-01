@@ -1,4 +1,5 @@
 require 'xni'
+require 'xni/util'
 
 module Example
   extend XNI::Extension
@@ -6,7 +7,10 @@ module Example
 
   # Attach xni_example_foo() as Example.foo
   native :foo, [], :fixnum
-   
+
+  native :array_of_double, [ carray(:double, :out) ], :void
+  native :array_of_fixnum, [ carray(:fixnum, :in) ], :void
+
   # A DataObject has native memory automatically allocated to hold the fields described by the 'data' directive
   class Foo < XNI::DataObject
     data :m_foo, :fixnum,
@@ -22,6 +26,9 @@ module Example
     native :foo, [], :fixnum
     
     native :pointer, [], :pointer
+    
+    native :sum_array_of_double, [ carray(:double, :in), :fixnum ], :double
+    native :sum_array_of_fixnum, [ carray(:fixnum, :in), :fixnum ], :fixnum
     
     # custom_finalizer indicates that before freeing the backing memory, it should call xni_#{class name}_finalize 
     custom_finalizer

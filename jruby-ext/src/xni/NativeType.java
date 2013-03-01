@@ -99,6 +99,7 @@ public enum NativeType {
         m.put(FLOAT, com.kenai.jffi.Type.FLOAT);
         m.put(DOUBLE, com.kenai.jffi.Type.DOUBLE);
         m.put(ADDRESS, com.kenai.jffi.Type.POINTER);
+        m.put(CARRAY, com.kenai.jffi.Type.POINTER);
         m.put(BOOL, com.kenai.jffi.Type.UCHAR);
         m.put(VOID, com.kenai.jffi.Type.VOID);
         

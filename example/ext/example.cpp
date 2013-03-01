@@ -41,6 +41,19 @@ example_foo(RubyEnv* rb)
     return retval;
 }
 
+XNI_EXPORT void 
+example_array_of_double(RubyEnv *rb, double *ary) 
+{
+
+}
+
+XNI_EXPORT void 
+example_array_of_fixnum(RubyEnv *rb, const fixnum *ary)
+{
+
+}
+
+
 XNI_EXPORT fixnum
 example_foo_foo(RubyEnv* rb, struct Example_Foo* foo)
 {
@@ -53,6 +66,30 @@ example_foo_pointer(RubyEnv* rb, struct Example_Foo* foo)
     printf("[C] returning Example_Foo(%p)\n", foo);
     return foo;
 }
+
+XNI_EXPORT double 
+example_foo_sum_array_of_double(RubyEnv *rb, struct Example_Foo *foo, const double *ary, fixnum length)
+{
+    double sum = 0;
+    
+    for (int i = 0; i < (int) length; i++) {
+        sum += ary[i];
+    }
+    
+    return sum;
+}
+
+XNI_EXPORT fixnum 
+example_foo_sum_array_of_fixnum(RubyEnv *rb, struct Example_Foo *foo, const fixnum *ary, fixnum length)
+{
+    fixnum sum = 0;
+    for (int i = 0; i < (int) length; i++) {
+        sum += ary[i];
+    }
+    
+    return sum;
+}
+
 
 
 struct Example_Bar {

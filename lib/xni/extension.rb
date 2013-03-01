@@ -9,6 +9,7 @@ else
   require 'xni/cruby/dynamic_library'
 end
 require 'xni/pointer'
+require 'xni/types'
 require 'ffi'
 
 module XNI
@@ -36,6 +37,10 @@ module XNI
 
     def native(fn, params, rtype)
       __xni_define_method__ fn.to_s, Util.module_stub(self, fn, params, rtype)
+    end
+
+    def carray(type, direction)
+      XNI.carray(type, direction)
     end
   end
 end

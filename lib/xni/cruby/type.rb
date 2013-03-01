@@ -45,11 +45,14 @@ module XNI
     end
     
     class CArray < Type
-      attr_reader :component_type, :length
+      IN = 0x1
+      OUT = 0x2
+      attr_reader :component_type, :length, :direction
       
-      def initialize(component_type, length)
+      def initialize(component_type, length, direction)
         @component_type = component_type
         @length = length
+        @direction = direction
       end
     end
   end

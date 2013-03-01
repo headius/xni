@@ -34,6 +34,7 @@ public class Function extends RubyObject {
         
         for (int i = 0; i < parameterTypes.length; i++) {
             objectParameterInfo[i] = getObjectParameterInfo(parameterTypes[i], i);
+            objectParameterStrategies[i] = PrimitiveArrayParameterStrategy.getObjectParameterStrategy(parameterTypes[i]);
             toNativeConverters[i] = getToNativeConverter(parameterTypes[i]);
         }
     }
@@ -77,7 +78,7 @@ public class Function extends RubyObject {
     }
     
     public ObjectParameterStrategy getObjectParameterStrategy(int idx) {
-        return null;
+        return objectParameterStrategies[idx];
     }
     
     public ObjectParameterInfo getObjectParameterInfo(int idx) {
@@ -136,6 +137,12 @@ public class Function extends RubyObject {
 
             case SLONG:
             case ULONG:
+                return jnr.ffi.Runtime.getSystemRuntime().longSize() == 4
+                        ? ObjectParameterInfo.ComponentType.LONG 
+                        : ObjectParameterInfo.ComponentType.INT;
+            
+            case SLONG_LONG:
+            case ULONG_LONG:
                 return ObjectParameterInfo.ComponentType.LONG;
 
             case FLOAT:
@@ -145,7 +152,7 @@ public class Function extends RubyObject {
                 return ObjectParameterInfo.ComponentType.DOUBLE;
             
             default:
-                throw new RuntimeException("unsupported array component type");
+                throw new RuntimeException("unsupported array component type: " + nativeType);
         }
     }
 }

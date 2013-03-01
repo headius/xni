@@ -48,6 +48,15 @@ module XNI
       super("struct #{struct_class.to_s.gsub('::', '_')} *")
     end
   end
+  
+  class ArrayType < Type
+    attr_reader :element_type, :direction
+    def initialize(element_type, direction)
+      super("#{direction == :in ? 'const ' : ''}#{element_type} *")
+    end
+    
+    ALLOWED_TYPES = [ :bool, :fixnum, :double ]
+  end
 
   PrimitiveTypes = {
       :void => 'void',
@@ -91,9 +100,14 @@ module XNI
     
     else
       raise TypeError.new("cannot resolve type #{type}")
-    end
-    
-    
+    end    
+  end
+
+
+  def self.carray(type, direction = :in)
+    raise ArgumentError.new("#{type} not allowed") unless ArrayType::ALLOWED_TYPES.include?(type)
+    raise ArgumentError.new("invalid direction, #{direction}") unless [ :in, :out, :inout ].include?(direction)
+    ArrayType.new(find_type(type), direction)
   end
 
   class Exporter
@@ -260,6 +274,10 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
 
     def extension(name)
     end
+
+    def carray(type, direction)
+      XNI.carray(type, direction)
+    end
   end
 
   class Struct
@@ -313,6 +331,10 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
       mod_name = self.to_s.gsub('::', '_').downcase
       cname = mod_name + '_' + name.to_s.sub(/\?$/, '_p')
       XNI.exporter.attach(name, cname, find_type(rtype), params.map { |t| find_type(t) }.unshift(find_type(self)).unshift(RubyEnv) )
+    end
+    
+    def self.carray(type, direction)
+      XNI.carray(type, direction)
     end
     
     def self.lifecycle(*args)

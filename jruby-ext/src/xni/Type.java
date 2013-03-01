@@ -221,29 +221,30 @@ public class Type extends RubyObject {
 
     public final static class CArray extends Type {
         private final Type componentType;
-        private final int length;
+        private final int length, arrayFlags;
         
         @JRubyConstant
-        public static final int IN = 0x1;
+        public static final int IN = ArrayFlags.IN;
         
         @JRubyConstant
-        public static final int OUT = 0x2;
+        public static final int OUT = ArrayFlags.OUT;
         
 
         /**
          * Initializes a new <tt>Type.CArray</tt> instance.
          */
-        public CArray(Ruby runtime, RubyClass klass, Type componentType, int length) {
+        CArray(Ruby runtime, RubyClass klass, Type componentType, int length, int arrayFlags) {
             super(runtime, klass, NativeType.CARRAY, componentType.size() * length, componentType.alignment());
             this.componentType = componentType;
             this.length = length;
+            this.arrayFlags = arrayFlags;
         }
 
         /**
          * Initializes a new <tt>Type.CArray</tt> instance.
          */
-        public CArray(Ruby runtime, Type componentType, int length) {
-            this(runtime, runtime.getModule("XNI").getClass("Type").getClass("CArray"), componentType, length);
+        CArray(Ruby runtime, Type componentType, int length, int arrayFlags) {
+            this(runtime, runtime.getModule("XNI").getClass("Type").getClass("CArray"), componentType, length, arrayFlags);
         }
 
 
@@ -256,22 +257,23 @@ public class Type extends RubyObject {
         }
 
         public final int flags() {
-            return ArrayFlags.IN | ArrayFlags.OUT;
+            return arrayFlags;
         }
 
         @JRubyMethod(name = "new", required = 3, meta = true)
         public static final IRubyObject newInstance(ThreadContext context, IRubyObject klass, 
-                                                    IRubyObject componentType, IRubyObject length, IRubyObject flags) {
+                                                    IRubyObject componentType, IRubyObject length, IRubyObject arrayFlags) {
             if (!(componentType instanceof Type)) {
                 throw context.runtime.newTypeError(componentType, context.getRuntime().getModule("XNI").getClass("Type"));
             }
 
-            return new CArray(context.runtime, (RubyClass) klass, (Type) componentType, RubyNumeric.fix2int(length));
+            return new CArray(context.runtime, (RubyClass) klass, (Type) componentType, RubyNumeric.fix2int(length),
+                    RubyNumeric.fix2int(arrayFlags));
         }
 
         @JRubyMethod
         public final IRubyObject length(ThreadContext context) {
-            return context.runtime.newFixnum(length);
+            return context.getRuntime().newFixnum(length);
         }
 
         @JRubyMethod

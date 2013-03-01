@@ -82,7 +82,10 @@ module XNI
     def self.param_type(type)
       if ALLOWED_PARAMETER_TYPES.include?(type) && TypeMap.has_key?(type)
         return TypeMap[type]
-        
+
+      elsif type.is_a?(Type)
+        return type
+      
       elsif type.is_a?(Class) && type < DataObject
         return XNI::Type::DataObject.new(type)
       end

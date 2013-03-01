@@ -38,7 +38,11 @@ class BufferInvokeUtil {
             }
             
             if (nativeType == NativeType.CARRAY) {
-                invocationBuffer.putObject(parameter, function.getObjectParameterStrategy(i), function.getObjectParameterInfo(i));
+                if (parameter == null) {
+                    invocationBuffer.putAddress(0);
+                } else {
+                    invocationBuffer.putObject(parameter, function.getObjectParameterStrategy(i), function.getObjectParameterInfo(i));
+                }
             
             } else {
                 marshal(runtime, invocationBuffer, nativeType, parameter);

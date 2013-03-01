@@ -27,6 +27,10 @@ module XNI
       def native(fn, params, rtype, options = {})
         __xni_define_method__ fn.to_s, Util.instance_stub(self, fn, params, rtype, options)
       end
+      
+      def carray(type, direction)
+        XNI.carray(type, direction)
+      end
 
       def data(*fields)
         fields.each_slice(2) do |name, type| 
