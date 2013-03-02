@@ -18,8 +18,8 @@ module XNI
       @ffi_pointer = ffi_pointer
     end
     
-    def to_s
-      "#<#{self.class}:address=#{ffi_pointer.address.to_s(16)}>"
+    def address
+      ffi_pointer.address
     end
   end
 end

@@ -60,8 +60,8 @@ module XNI
     end
     
     def self.__xni_finalizer__(function)
-      @__xni_finalizer__ = function
-      @__xni_factory__.finalizer = function if defined?(@__xni_factory__)
+      @__xni_finalizer__ = FFI::Function.new(function.result_type.ffi_type, [ FFI::Type::POINTER, FFI::Type::POINTER  ] + function.parameter_types.map(&:ffi_type), function.address.ffi_pointer)
+      @__xni_factory__.finalizer = @__xni_finalizer__ if defined?(@__xni_factory__)
     end
 
     def self.__xni_define_method__(name, function)
