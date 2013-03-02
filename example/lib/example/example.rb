@@ -1,5 +1,4 @@
 require 'xni'
-require 'xni/util'
 
 module Example
   extend XNI::Extension
@@ -19,10 +18,15 @@ module Example
     data_reader :m_bar
     data_accessor :m_foo
 
+    # Attach example_foo_s_foo as Example::Foo.foo 
+    class << self
+      native :foo, [ ], :fixnum
+    end
+
     # Attach a native function as Example::Foo#initialize
     native :initialize, [ :fixnum ], :void
     
-    # Attach xni_example_foo_foo() as Example::Foo#foo
+    # Attach example_foo_foo() as Example::Foo#foo
     native :foo, [], :fixnum
     
     native :pointer, [], :pointer

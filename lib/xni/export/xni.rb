@@ -308,6 +308,12 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
 
     def self.inherited(klass)
       XNI.exporter.add_struct(klass) if self == DataObject
+      
+      klass.singleton_class.define_singleton_method(:native) do |name, params, rtype|
+        mod_name = klass.to_s.gsub('::', '_').downcase
+        cname = mod_name + '_s_' + name.to_s.sub(/\?$/, '_p')
+        XNI.exporter.attach(name, cname, DataObject.find_type(rtype), params.map { |t| DataObject.find_type(t) }.unshift(RubyEnv) )
+      end
     end
     
     def self.data(*fields)

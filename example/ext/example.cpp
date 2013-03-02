@@ -19,6 +19,12 @@ xni_example_unload(RubyVM* vm, void* data)
     free(data);
 }
 
+XNI_EXPORT fixnum
+example_foo_s_foo(RubyEnv* rb)
+{
+    return 0x1eefbeefLL;
+}
+
 XNI_EXPORT void
 example_foo_initialize(RubyEnv* rb, struct Example_Foo* foo, fixnum foo_value)
 {

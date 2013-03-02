@@ -12,6 +12,11 @@ module XNI
       class << klass
         attr_reader :__xni__, :__ffi__, :__xni_factory__
       end
+
+      klass.singleton_class.define_singleton_method :native do |fn, params, rtype, options = {}|
+        klass.__xni_define_singleton_method__ fn.to_s, Util.singleton_stub(klass, fn, params, rtype, options)
+      end
+      
       klass.extend FFI::DataConverter
       klass.native_type FFI::Type::POINTER
 
@@ -72,10 +77,24 @@ module XNI
         end
       EVAL
     end
+
+    def self.__xni_define_singleton_method__(name, function)
+      cname = Util.stub_cname(self, 's_' + name.to_s)
+      FFI::Function.new(function.result_type.ffi_type, [ FFI::Type::POINTER  ] + function.parameter_types.map(&:ffi_type), function.address.ffi_pointer).attach(__xni__.__ffi__, cname)
+    
+      rb_params = (0...function.parameter_types.length).map { |i| "a#{i}" }
+      c_params = %w(__xni__.__xni_ext_data__) + rb_params
+    
+      instance_eval <<-EVAL
+        def #{name.to_s}(#{rb_params.join(', ')})
+          __xni__.__ffi__.#{cname}(#{c_params.join(', ')})
+        end
+      EVAL
+    end
     
     def self.__xni_data_fields__(*fields)
       raise RuntimeError.new("data fields already specified") if defined?(@__xni_struct_class__)
-      fields = fields.each_slice(2).map { |f| [ f[0], TypeMap[ f[1]].ffi_type ] }.flatten
+      fields = fields.each_slice(2).map { |f| [ f[0], f[1].ffi_type ] }.flatten
       @__xni_struct_class__ = Class.new(FFI::Struct) { |c| c.layout *fields }
       @__xni_factory__ = Factory.new(self, @__xni_struct_class__, defined?(@__xni_finalizer__) ? @__xni_finalizer__ : nil)
     end

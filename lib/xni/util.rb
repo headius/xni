@@ -95,6 +95,10 @@ module XNI
       XNI::Function.new(stub_address(mod, name), result_type(rtype), params.map { |t| param_type(t) })
     end
 
+    def self.singleton_stub(mod, name, params, rtype, options = {})
+      XNI::Function.new(stub_address(mod, 's_' + name.to_s), result_type(rtype), params.map { |t| param_type(t) })
+    end
+
     def self.instance_stub(mod, name, params, rtype, options = {})
       XNI::Function.new(stub_address(mod, name), result_type(rtype), params.map { |t| param_type(t) })
     end

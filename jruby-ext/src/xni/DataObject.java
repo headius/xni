@@ -236,6 +236,17 @@ public final class DataObject extends RubyObject {
         return context.nil;
     }
 
+    @JRubyMethod(name = "__xni_define_singleton_method__", visibility = Visibility.PRIVATE, module = true)
+    public static IRubyObject define_singleton_method(ThreadContext context, IRubyObject self, IRubyObject rbMethodName, IRubyObject rbFunction) {
+
+        ExtensionData extData = Extension.getExtensionData(context.getRuntime(), self.getInstanceVariables().getInstanceVariable("@__xni__"));
+        ExtensionMethod method = new ExtensionMethod(self.getSingletonClass(), extData, (Function) rbFunction);
+        method.setName(rbMethodName.asJavaString());
+
+        self.getSingletonClass().addMethod(rbMethodName.asJavaString(), method);
+        return context.nil;
+    }
+
     @JRubyMethod(name = "__xni_finalizer__", visibility = Visibility.PRIVATE, module = true)
     public static IRubyObject define_finalizer(ThreadContext context, IRubyObject self, IRubyObject rbFunction) {
         if (self.getInternalVariables().getInternalVariable("__xni_finalizer__") != null) {

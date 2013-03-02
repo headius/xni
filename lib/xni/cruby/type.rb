@@ -50,6 +50,7 @@ module XNI
       attr_reader :component_type, :length, :direction
       
       def initialize(component_type, length, direction)
+        super(FFI::Type::POINTER)
         @component_type = component_type
         @length = length
         @direction = direction
