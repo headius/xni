@@ -3,7 +3,7 @@ require 'xni/util'
 if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
   require 'xni/jruby/data_object'
 else
-  require 'xni/cruby/data_object'
+  require 'xni/ffi-impl/data_object'
 end
 
 module XNI

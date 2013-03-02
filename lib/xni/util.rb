@@ -4,8 +4,8 @@
 if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
   require 'xni/xni_ext'
 else
-  require 'xni/cruby/type'
-  require 'xni/cruby/function'
+  require 'xni/ffi-impl/type'
+  require 'xni/ffi-impl/function'
 end
 
 require 'xni/pointer'

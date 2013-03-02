@@ -3,10 +3,10 @@ require 'xni/util'
 if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
   require 'xni/jruby/extension'
 else
-  require 'xni/cruby/type'
-  require 'xni/cruby/extension'
-  require 'xni/cruby/extension_data'
-  require 'xni/cruby/dynamic_library'
+  require 'xni/ffi-impl/type'
+  require 'xni/ffi-impl/extension'
+  require 'xni/ffi-impl/extension_data'
+  require 'xni/ffi-impl/dynamic_library'
 end
 require 'xni/pointer'
 require 'xni/types'

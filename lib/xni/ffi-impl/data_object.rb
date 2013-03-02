@@ -1,8 +1,8 @@
 require 'ffi'
 require 'xni/loader'
 require 'xni/util'
-require 'xni/cruby/data_object_factory'
-require 'xni/cruby/auto_release_pool'
+require 'xni/ffi-impl/data_object_factory'
+require 'xni/ffi-impl/auto_release_pool'
 
 module XNI
   class DataObject

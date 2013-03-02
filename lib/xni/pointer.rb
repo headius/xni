@@ -1,5 +1,5 @@
 if !defined?(JRUBY_VERSION) || JRUBY_VERSION < "1.7.0"
-  require 'xni/cruby/pointer'
+  require 'xni/ffi-impl/pointer'
 end
 
 module XNI

@@ -1,4 +1,4 @@
-require 'xni/cruby/pointer'
+require 'xni/ffi-impl/pointer'
 
 module XNI
   class Type

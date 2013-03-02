@@ -1,5 +1,5 @@
-require 'xni/cruby/extension_data'
-require 'xni/cruby/dynamic_library'
+require 'xni/ffi-impl/extension_data'
+require 'xni/ffi-impl/dynamic_library'
 
 module XNI
   module Extension
