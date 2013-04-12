@@ -1,4 +1,5 @@
 doc/
+out/
 .yardoc
 *.orig
 nbproject/private
