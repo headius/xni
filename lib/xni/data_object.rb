@@ -1,10 +1,6 @@
 require 'xni/util'
 
-if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
-  require 'xni/jruby/data_object'
-else
-  require 'xni/ffi-impl/data_object'
-end
+require File.join(XNI::IMPL_DIR, File.basename(__FILE__))
 
 module XNI
   ALLOWED_DATA_TYPES = [

@@ -23,3 +23,5 @@ lib/ffi_c.so
 /lib/xni/xni_ext.jar
 __xni*.cpp
 *.o
+/cruby-ext/extconf.h
+/cruby-ext/*.o

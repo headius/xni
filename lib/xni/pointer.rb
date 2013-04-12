@@ -1,6 +1,4 @@
-if !defined?(JRUBY_VERSION) || JRUBY_VERSION < "1.7.0"
-  require 'xni/ffi-impl/pointer'
-end
+require File.join(XNI::IMPL_DIR, File.basename(__FILE__))
 
 module XNI
   class Pointer

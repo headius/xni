@@ -1,0 +1,1 @@
+require 'xni_cruby'

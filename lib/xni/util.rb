@@ -1,14 +1,7 @@
 #
 # These are utilities for internal XNI use - do NOT use in general code.
 #
-if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
-  require 'xni/xni_ext'
-else
-  require 'xni/ffi-impl/type'
-  require 'xni/ffi-impl/function'
-end
-
-require 'xni/pointer'
+require 'xni'
 
 module XNI
   

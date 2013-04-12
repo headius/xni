@@ -1,0 +1,1 @@
+# XNI::Pointer is implemented in java

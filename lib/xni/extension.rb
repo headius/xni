@@ -1,13 +1,5 @@
+require File.join(XNI::IMPL_DIR, File.basename(__FILE__))
 require 'xni/util'
-
-if defined?(JRUBY_VERSION) && JRUBY_VERSION >= "1.7.0"
-  require 'xni/jruby/extension'
-else
-  require 'xni/ffi-impl/type'
-  require 'xni/ffi-impl/extension'
-  require 'xni/ffi-impl/extension_data'
-  require 'xni/ffi-impl/dynamic_library'
-end
 require 'xni/pointer'
 require 'xni/types'
 require 'ffi'
