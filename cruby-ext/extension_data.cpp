@@ -50,8 +50,8 @@ extension_data_allocate(VALUE klass)
     return TypedData_Wrap_Struct(klass, &extension_data_type, new ExtensionData());
 }
 
-static VALUE
-extension_data_initialize(VALUE self, VALUE load, VALUE unload)
+static VALUE 
+extension_load(VALUE self, VALUE load)
 {
     ffi_sarg retval;
     void* vm = (void *) (uintptr_t) 0xfee1deadcafebabeLL;
@@ -61,7 +61,15 @@ extension_data_initialize(VALUE self, VALUE load, VALUE unload)
     ffi_call(&load_cif, FFI_FN(Symbol::from_value(load)->address()), &retval, values);
 
     if (retval < 0) {
-        rb_raise(rb_eLoadError, "%s failed with error %d", Symbol::from_value(load)->name().c_str(), (int) retval);
+        throw RubyException(rb_eLoadError, "%s failed with error %d", Symbol::from_value(load)->name().c_str(), (int) retval);
+    }
+}
+
+static VALUE
+extension_data_initialize(VALUE self, VALUE load, VALUE unload)
+{
+    if (!NIL_P(load)) {
+        TRY(extension_load(self, load));
     }
 
     return self;

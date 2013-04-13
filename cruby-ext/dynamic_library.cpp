@@ -223,26 +223,24 @@ static VALUE
 symbol_inspect(VALUE self)
 {
     char buf[256];
-
-    Symbol* sym = Symbol::from_value(self);
-    snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
-             sym->name().c_str(), sym->address());
+    TRY(
+        shared_ptr<Symbol> sym = Symbol::from_value(self);
+        snprintf(buf, sizeof(buf), "#<FFI::Library::Symbol name=%s address=%p>",
+                 sym->name().c_str(), sym->address());
+    );
     return rb_str_new2(buf);
 }
 
 static VALUE
 symbol_address(VALUE self)
 {
-    return ULL2NUM((uintptr_t) Symbol::from_value(self)->address());
+    TRY(return ULL2NUM((uintptr_t) Symbol::from_value(self)->address()));
 }
 
-Symbol* 
+shared_ptr<Symbol>
 Symbol::from_value(VALUE v)
 {
-    Symbol* sym;
-
-    TypedData_Get_Struct(v, Symbol, &symbol_data_type, sym);
-    return sym;
+    return shared_ptr<Symbol>(lock(object_from_value<Symbol>(v, &symbol_data_type)));
 }
 
 void

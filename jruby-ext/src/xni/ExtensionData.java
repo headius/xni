@@ -52,7 +52,10 @@ public class ExtensionData extends RubyObject {
             }
         }
 
-        return new ExtensionData(context.getRuntime(), (RubyClass) recv, memory.getPointer(0));
+        jnr.ffi.Pointer nativeExtensionData = memory.getPointer(0);
+        
+        return new ExtensionData(context.getRuntime(), (RubyClass) recv, 
+                nativeExtensionData != null ? nativeExtensionData : jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().newOpaquePointer(0));
     }
     
     long address() {

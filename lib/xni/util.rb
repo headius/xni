@@ -1,7 +1,6 @@
 #
 # These are utilities for internal XNI use - do NOT use in general code.
 #
-require 'xni'
 
 module XNI
   

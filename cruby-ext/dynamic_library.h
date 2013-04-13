@@ -53,7 +53,7 @@ namespace xni {
             return m_name;
         }
         
-        static Symbol* from_value(VALUE v);
+        static shared_ptr<Symbol> from_value(VALUE v);
     };
 };
 

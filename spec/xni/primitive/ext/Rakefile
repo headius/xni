@@ -1,0 +1,5 @@
+require 'xni/compile_task'
+
+XNI::CompileTask.new('primitive') do |t|
+  t.export '../lib/primitive.rb'
+end

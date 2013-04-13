@@ -207,7 +207,7 @@ data_object_s_set_size(VALUE self, VALUE address)
         ffi_sarg retval;
         void* argv[] = {};
     
-        Symbol* symbol = Symbol::from_value(address);
+        shared_ptr<Symbol> symbol = Symbol::from_value(address);
         ffi_call(&cif, FFI_FN(symbol->address()), &retval, argv);
         if (retval < 0) {
             throw RubyException(rb_eLoadError, "%s failed with error %d", symbol->name().c_str(), (int) retval);

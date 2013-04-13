@@ -20,9 +20,10 @@ lib/ffi_c.so
 .idea
 *.iml
 /example/ext/example.h
-/example/ext/x86_64*
+*x86_64-darwin*
 /lib/xni/xni_ext.jar
 __xni*.cpp
+spec/xni/**/ext/*.h
 *.o
 /cruby-ext/extconf.h
 /cruby-ext/*.o

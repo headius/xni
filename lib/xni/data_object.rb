@@ -10,7 +10,7 @@ module XNI
   ]
   
   def self.autoreleasepool(&b)
-    AutoReleasePool.new &b
+    AutoReleasePool.new(&b)
   end
 
   class DataObject
@@ -35,15 +35,15 @@ module XNI
         
         data_fields = fields.each_slice(2).map { |f|  [ f[0], TypeMap[f[1]]] }.flatten
         @__xni_fields__ = Hash[*data_fields]
-        __xni_data_fields__ *data_fields
+        __xni_data_fields__(*data_fields)
       end
 
       def data_reader(*fields)
-        __xni_data_reader__ *fields
+        __xni_data_reader__(*fields)
       end
 
       def data_accessor(*fields)
-        __xni_data_accessor__ *fields
+        __xni_data_accessor__(*fields)
       end
       
       public

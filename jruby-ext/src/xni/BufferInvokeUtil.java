@@ -114,23 +114,35 @@ class BufferInvokeUtil {
     static void marshal(Ruby runtime, HeapInvocationBuffer invocationBuffer, NativeType nativeType, Object parameter) {
         switch (nativeType) {
             case SCHAR:
-            case UCHAR:
                 invocationBuffer.putByte(Util.int8Value(parameter));
                 break;
 
+            case UCHAR:
+                invocationBuffer.putByte(Util.uint8Value(parameter));
+                break;
+
             case SSHORT:
-            case USHORT:
                 invocationBuffer.putShort(Util.int16Value(parameter));
+                break;
+            
+            case USHORT:
+                invocationBuffer.putShort(Util.uint16Value(parameter));
                 break;
 
             case SINT:
-            case UINT:
                 invocationBuffer.putInt(Util.int32Value(parameter));
+                break;
+            
+            case UINT:
+                invocationBuffer.putInt((int) Util.uint32Value(parameter));
                 break;
 
             case SLONG_LONG:
-            case ULONG_LONG:
                 invocationBuffer.putLong(Util.int64Value(parameter));
+                break;
+            
+            case ULONG_LONG:
+                invocationBuffer.putLong(Util.uint64Value(parameter));
                 break;
 
             case FLOAT:
