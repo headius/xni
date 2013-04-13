@@ -2,20 +2,14 @@ require File.join(XNI::IMPL_DIR, File.basename(__FILE__))
 require 'xni/util'
 require 'xni/pointer'
 require 'xni/types'
-require 'ffi'
 
 module XNI
   module Extension
     def self.extended(mod)
       class << mod
-        attr_reader :__ffi__, :__xni__, :__xni_library__
+        attr_reader :__xni__, :__xni_library__
       end
-
-      ffi = Module.new do |c|
-        c.extend FFI::Library
-      end
-
-      mod.instance_variable_set :@__ffi__, ffi 
+ 
       mod.instance_variable_set :@__xni__, mod
     end
 
