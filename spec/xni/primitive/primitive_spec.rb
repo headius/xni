@@ -2,7 +2,8 @@
 
 describe 'primitives' do
   before :all do
-    system("cd #{File.dirname(__FILE__)}/ext && rake -I../../../../lib")
+    load_path = $:.map{ |p| "-I#{p}" }.join(' ')
+    system("cd #{File.dirname(__FILE__)}/ext && rake #{load_path}")
     require File.join(File.dirname(__FILE__), 'lib', 'primitive')
   end
 

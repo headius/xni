@@ -1,5 +1,4 @@
 require 'pathname'
-require 'xni/platform'
 
 module XNI
   module Loader

@@ -9,5 +9,4 @@ end
 
 require File.join(XNI::IMPL_DIR, 'xni.rb')
 require 'xni/extension'
-require 'xni/platform'
 require 'xni/data_object'

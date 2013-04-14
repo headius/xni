@@ -102,6 +102,7 @@ extern "C" void
 Init_xni_cruby()
 {
     VALUE xniModule = rb_define_module("XNI");
+    platform_init(xniModule);
     type_init(xniModule);
     closure_pool_init(xniModule);
     method_stub_init(xniModule);    

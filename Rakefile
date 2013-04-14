@@ -62,7 +62,7 @@ end
 desc "Run all specs"
 
 task :specs => TEST_DEPS do
-  sh %{#{Gem.ruby} -w -S rspec -Ilib -I#{BUILD_DIR} spec/xni}
+  sh %{#{Gem.ruby} -w -Ilib -I#{BUILD_DIR} -S rspec spec/xni}
 end
 
 Gem::Tasks.new do |t|

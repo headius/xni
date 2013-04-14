@@ -41,7 +41,7 @@ namespace xni {
     void method_stub_init(VALUE module);
     void closure_pool_init(VALUE module);
     void auto_release_pool_init(VALUE module);
-    
+    void platform_init(VALUE module);
     
     class Object {
     private:
