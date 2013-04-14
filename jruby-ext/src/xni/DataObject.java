@@ -49,7 +49,6 @@ public final class DataObject extends RubyObject {
             this.extensionData = extensionData;
             this.finalizer = finalizer;
             this.layout = layout;
-            System.out.println("creating metadata with layout size=" + layout.size());
         }
 
         public Layout getLayout() {

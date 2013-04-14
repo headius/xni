@@ -62,16 +62,27 @@ public final class Platform extends RubyObject {
     }
     
     @JRubyMethod
-    public final IRubyObject map_library_name(ThreadContext context, IRubyObject libraryName) { 
-        if (jnrPlatform.getOS() == jnr.ffi.Platform.OS.DARWIN) {
-            return context.getRuntime().newString(String.format(LOCALE, "%s.bundle", libraryName.asString().asJavaString()));
-        }
-
-        return context.getRuntime().newString(System.mapLibraryName(libraryName.asString().asJavaString()));
+    public final IRubyObject map_library_name(ThreadContext context, IRubyObject libraryName) {
+        return context.getRuntime().newString(String.format(LOCALE, "%s-%s", 
+                libraryName.asString().asJavaString(), determineLibExt()));
     }
     
     @JRubyMethod(name = { "mac?" })
     public final IRubyObject mac_p(ThreadContext context) {
         return context.getRuntime().newBoolean(jnrPlatform.getOS() == jnr.ffi.Platform.OS.DARWIN);
+    }
+
+
+    private final String determineLibExt() {
+        switch (jnrPlatform.getOS()) {
+            case WINDOWS:
+                return "dll";
+            
+            case DARWIN:
+                return "bundle";
+            
+            default:
+                return "so";
+        }
     }
 }

@@ -335,7 +335,7 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
     
     def self.native(name, params, rtype)
       mod_name = self.to_s.gsub('::', '_').downcase
-      cname = mod_name + '_' + name.to_s.sub(/\?$/, '_p')
+      cname = mod_name + '_' + __mangle_function_name__(name)
       XNI.exporter.attach(name, cname, find_type(rtype), params.map { |t| find_type(t) }.unshift(find_type(self)).unshift(RubyEnv) )
     end
     
@@ -345,6 +345,19 @@ extern "C" int xni_#{mod_name}_sizeof_#{struct_name}(void)
     
     def self.lifecycle(*args)
       
+    end
+    
+    def self.__mangle_function_name__(name)
+      mangled = name.to_s.dup
+      
+      if mangled =~ /([A-Za-z0-9]+)=$/
+        mangled = 'set_' + $1 
+      
+      elsif mangled =~ /\?$/
+        mangled.sub!(/\?$/, '_p')
+      end
+      
+      mangled
     end
   end
 end

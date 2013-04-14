@@ -1,0 +1,5 @@
+require 'xni/compile_task'
+
+XNI::CompileTask.new('data_object') do |t|
+  t.export '../lib/data_object.rb'
+end

@@ -51,7 +51,20 @@ module XNI
     end
     
     def self.stub_cname(mod, function)
-      'xni_' + module_cname(mod) + '_' + function.to_s.sub(/\?$/, '_p')
+      'xni_' + module_cname(mod) + '_' + __mangle_function_name__(function)
+    end
+
+    def self.__mangle_function_name__(name)
+      mangled = name.to_s.dup
+
+      if mangled =~ /([A-Za-z0-9]+)=$/
+        mangled = 'set_' + $1
+
+      elsif mangled =~ /\?$/
+        mangled.sub!(/\?$/, '_p')
+      end
+
+      mangled
     end
     
     def self.stub_address(mod, name)

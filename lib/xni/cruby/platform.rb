@@ -33,13 +33,13 @@ module XNI
 
     def map_library_name(lib_name)
       if mac?
-        "lib#{lib_name}.bundle"
+        "#{lib_name}.bundle"
 
       elsif os == 'windows'
         lib_name + '.dll'
 
       else
-        "lib#{lib_name}.so"
+        "#{lib_name}.so"
       end
     end
   end

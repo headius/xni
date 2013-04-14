@@ -193,7 +193,7 @@ data_object_s_data_fields(int argc, VALUE *argv, VALUE self)
         types[i / 2] = argv[i + 1];
     }
 
-    TRY(set_data_fields(self, argc, names, types));
+    TRY(set_data_fields(self, argc / 2, names, types));
 
     return Qnil;
 }
