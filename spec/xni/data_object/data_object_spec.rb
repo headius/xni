@@ -6,9 +6,32 @@ describe 'data_object' do
     require File.join(File.dirname(__FILE__), 'lib', 'data_object')
   end
 
-  describe 'instance methods' do
-    it 'blah' do
+  describe 'attributes' do
+    subject(:foobar) { DataObject::FooBar.new(0xdeadbeef, 0xfee1dead) }
+    it { foobar.m_foo.should == 0xdeadbeef }
+    it { foobar.m_bar.should == 0xfee1dead }
+  end
+  
+  describe 'instance methods' do 
+    describe 'setter' do
+      subject(:foobar) { DataObject::FooBar.new(0, 0) }
+      it 'foo=' do
+        foobar.foo = 0xdeadbeef
+        foobar.m_foo.should == 0xdeadbeef
+      end
+  
+      it 'bar=' do
+        foobar.bar = 0xdeadbeef
+        foobar.m_bar.should == 0xdeadbeef
+      end
     end
+
+    describe 'getter' do
+      subject(:foobar) { DataObject::FooBar.new(0xdeadbeef, 0xfee1dead) }
+      it { foobar.foo.should == 0xdeadbeef }
+      it { foobar.bar.should == 0xfee1dead }
+    end
+    
   end
   def iterate(arity, values)
     idx = (0...arity).map { 0 }

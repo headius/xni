@@ -26,16 +26,16 @@ dataobject_foobar_bar(RubyEnv *rb, struct DataObject_FooBar *foo)
     return foo->m_bar;
 }
 
-XNI_EXPORT void 
+XNI_EXPORT fixnum 
 dataobject_foobar_set_foo(RubyEnv *rb, struct DataObject_FooBar *foobar, fixnum foo)
 {
-    foobar->m_foo = foo;
+    return foobar->m_foo = foo;
 }
 
-XNI_EXPORT void 
+XNI_EXPORT fixnum 
 dataobject_foobar_set_bar(RubyEnv *rb, struct DataObject_FooBar *foobar, fixnum bar)
 {
-    foobar->m_bar = bar;
+    return foobar->m_bar = bar;
 }
 
 XNI_EXPORT int

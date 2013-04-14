@@ -14,8 +14,8 @@ module DataObject
     native :initialize, [ :fixnum, :fixnum ], :void
     native :foo, [], :fixnum
     native :bar, [], :fixnum
-    native :foo=, [ :fixnum ], :void
-    native :bar=, [ :fixnum ], :void
+    native :foo=, [ :fixnum ], :fixnum
+    native :bar=, [ :fixnum ], :fixnum
   end
   
   class XOR < XNI::DataObject
