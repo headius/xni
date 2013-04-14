@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/wmeissner/xni'
   s.summary = 'X Native Interface'
-  s.description = 'Native C access for Ruby VMs'
+  s.description = 'Native C access for JRuby'
   s.files = %w(xni.gemspec LICENSE README.md Rakefile) 
   s.files << Dir.glob('ext/**/*.[ch]')
   s.files << Dir.glob('{spec,libtest}/**/*')
@@ -16,4 +16,5 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9.3'
   s.add_dependency 'rake', '>= 10.0.0'
   s.add_development_dependency 'rspec'
+  s.add_development_dependency 'rubygems-tasks'
 end
