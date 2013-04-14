@@ -1,6 +1,7 @@
 require 'ffi'
 
 module XNI
+  if !defined?(JRUBY_VERSION)
   class Platform
     LIBSUFFIX = FFI::Platform.mac? ? 'bundle' : FFI::Platform::LIBSUFFIX
     LIBPREFIX = FFI::Platform.mac? ? '' : FFI::Platform::LIBPREFIX
@@ -28,5 +29,6 @@ module XNI
     def mac?
       FFI::Platform.mac?
     end
+  end
   end
 end

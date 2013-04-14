@@ -3,7 +3,7 @@ require 'rake/tasklib'
 require 'rake/clean'
 require 'tmpdir'
 require 'rbconfig'
-require 'xni/platform'
+require 'xni'
 
 module XNI
   class CompileTask < Rake::TaskLib
@@ -73,6 +73,16 @@ module XNI
     private
     def define_task!
       pic_flags = %w(-fPIC)
+      
+      out_dir = "#{@platform.arch}-#{@platform.os}"
+      if @ext_dir != '.'
+        out_dir = File.join(@ext_dir, out_dir)
+      end
+
+      directory(out_dir)
+      CLOBBER.include(out_dir)
+
+      lib_name = File.join(out_dir, @platform.map_library_name(@name))
       so_flags = []
 
       if @platform.mac?
@@ -86,16 +96,6 @@ module XNI
         so_flags << '-shared'
       end
       so_flags = so_flags.join(' ')
-
-      out_dir = "#{@platform.arch}-#{@platform.os}"
-      if @ext_dir != '.'
-        out_dir = File.join(@ext_dir, out_dir)
-      end
-
-      directory(out_dir)
-      CLOBBER.include(out_dir)
-
-      lib_name = File.join(out_dir, Platform.system.map_library_name(@name))
 
       iflags = @include_paths.uniq.map { |p| "-I#{p}" }
       defines = @functions.uniq.map { |f| "-DHAVE_#{f.upcase}=1" }
