@@ -63,7 +63,7 @@ public final class Platform extends RubyObject {
     
     @JRubyMethod
     public final IRubyObject map_library_name(ThreadContext context, IRubyObject libraryName) {
-        return context.getRuntime().newString(String.format(LOCALE, "%s-%s", 
+        return context.getRuntime().newString(String.format(LOCALE, "%s.%s", 
                 libraryName.asString().asJavaString(), determineLibExt()));
     }
     
