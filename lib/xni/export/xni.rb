@@ -203,24 +203,7 @@ XNI_EXPORT void xni_#{mod_name}_unload(RubyVM *, void *);
       File.open(stubs_file, 'w') do |f|
         f.puts "#include <xni.h>"
         f.puts "#include \"#{File.basename(header_file)}\""
-        f.puts <<-API
-        
-static void* ext_data(RubyEnv *);
-static struct RubyInterface_ xni_funcs = {
-  ext_data
-};
-
-struct RubyEnvImpl: public RubyEnv_ {
-    void* ext_data;
-    RubyEnvImpl(void* ext_data_): RubyEnv_(&xni_funcs), ext_data(ext_data_) {}    
-};
-
-static void* 
-ext_data(RubyEnv* rb)
-{
-    return reinterpret_cast<RubyEnvImpl *>(rb)->ext_data;
-}
-        API
+        f.puts "#include \"#{File.expand_path('../../../../runtime/xni_runtime.h', __FILE__)}\""
 
         @functions.each do |fn|
           
@@ -234,8 +217,16 @@ extern "C" #{fn[:result_type].cdecl} xni_#{fn[:cname]}(#{params_with_names.join(
 extern "C" #{fn[:result_type].cdecl} 
 xni_#{fn[:cname]}(#{params_with_names.join(', ')}) 
 {
-    RubyEnvImpl rb(ext_data);
-    #{fn[:result_type].cdecl != 'void' ? 'return ' : ''}#{fn[:cname]}(#{param_names.unshift('&rb').join(', ')});
+    RubyEnv_ rb(&xni::ruby_functions, (ExtensionData *) ext_data);
+    try {
+        #{fn[:result_type].cdecl != 'void' ? 'return ' : ''}#{fn[:cname]}(#{param_names.unshift('&rb').join(', ')});
+    
+    } catch (xni::exception& xni_exc) { 
+      xni::handle_exception((ExtensionData *) ext_data, xni_exc);
+    
+    } catch (std::exception& std_exc) { 
+      xni::handle_exception((ExtensionData *) ext_data, std_exc); 
+    }
 } 
 
           STUB

@@ -68,19 +68,27 @@ namespace xni {
         }
     };
     
-    class RubyException : public std::exception {
-    private:
+    class RaiseException : public std::exception {
+    protected:
         VALUE m_exc;
     
-    public:
-        RubyException(VALUE etype, const char* fmt, ...);
-        ~RubyException() throw() {}
+        RaiseException() {}
+
+    public:    
+        ~RaiseException() throw() {}            
         
         inline VALUE exc() {
             return m_exc;
         }
         
+        
         const char* what() throw();
+    };
+    
+    class RubyException : public RaiseException {
+    public:
+        RubyException(VALUE etype, const char* fmt, ...);
+        ~RubyException() throw() {}
     };
     
     void check_type(VALUE obj, VALUE t);
@@ -103,7 +111,7 @@ namespace xni {
     VALUE rbexc__ = Qnil; \
     try { \
         do { block; } while(0); \
-    } catch (RubyException& ex) { \
+    } catch (RaiseException& ex) { \
         rbexc__ = ex.exc(); \
     } catch (std::exception& ex) { \
         rbexc__ = rb_exc_new2(rb_eRuntimeError, ex.what()); \

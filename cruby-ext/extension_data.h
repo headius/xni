@@ -30,15 +30,25 @@ namespace xni {
     using std::tr1::shared_ptr;
     
     class ExtensionData : public xni::Object {
+    private:
+        void* m_ext_data;
+    
     public:
-        void* ext_data;
         
-        ExtensionData(): ext_data(0) {}
+        ExtensionData(): m_ext_data(0) {}
         
         static shared_ptr<ExtensionData> from_value(VALUE);
         
         inline void* address() {
-            return ext_data;
+            return m_ext_data;
+        }
+        
+        inline void* ext_data() {
+            return m_ext_data;
+        }
+        
+        inline void ext_data(void *ext_data) {
+            m_ext_data = ext_data;
         }
     };
     

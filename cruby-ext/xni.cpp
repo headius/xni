@@ -74,7 +74,7 @@ RubyException::RubyException(VALUE etype, const char* fmt, ...)
 }
 
 const char*
-RubyException::what() throw()
+RaiseException::what() throw()
 {
     VALUE mesg = rb_funcall(m_exc, rb_intern("to_s"), 0, 0);
     return StringValueCStr(mesg);

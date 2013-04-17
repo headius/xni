@@ -55,7 +55,8 @@ extension_load(VALUE self, VALUE load)
 {
     ffi_sarg retval;
     void* vm = (void *) (uintptr_t) 0xfee1deadcafebabeLL;
-    void** ext_data_ptr = &ExtensionData::from_value(self)->ext_data;
+    void* ext_data;
+    void** ext_data_ptr = &ext_data;
     void* values[] = { &vm, &ext_data_ptr };
     
     ffi_call(&load_cif, FFI_FN(Symbol::from_value(load)->address()), &retval, values);
@@ -63,6 +64,7 @@ extension_load(VALUE self, VALUE load)
     if (retval < 0) {
         throw RubyException(rb_eLoadError, "%s failed with error %d", Symbol::from_value(load)->name().c_str(), (int) retval);
     }
+    ExtensionData::from_value(self)->ext_data(ext_data);
 }
 
 static VALUE

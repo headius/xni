@@ -17,7 +17,7 @@ module XNI
       @name = File.basename(name)
       @ext_dir = File.dirname(name)
       @defines = []
-      @include_paths = [ XNI_INCDIR ]
+      @include_paths = [ XNI_INCDIR, File.expand_path('../../../runtime') ]
       @library_paths = []
       @libraries = []
       @headers = []
@@ -64,17 +64,32 @@ module XNI
 
     def export(rb_file)
       @exports << { 
-          :rb_file => rb_file, 
-          :header => File.join(@ext_dir, File.basename(rb_file).sub(/\.rb$/, '.h')), 
-          :stub => File.join(@ext_dir, '__xni_' + File.basename(rb_file).sub(/\.rb$/, '.cpp')) 
+          :rb_file => rb_file 
       }
     end
 
     private
+    def compile(src_file, obj_file, c)
+      extra_opts = src_file =~ /__xni_/ ? ' -fomit-frame-pointer ' : ''
+      desc "compile #{src_file}"
+      if src_file =~ /\.c$/
+        file obj_file => [ src_file, File.dirname(obj_file) ] do |t|
+          sh "#{c[:cc]} #{c[:cflags]}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
+        end
+
+      else
+        file obj_file => [ src_file, File.dirname(obj_file) ] do |t|
+          sh "#{c[:cxx]} #{c[:cxxflags]}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
+        end
+      end
+    end
+
     def define_task!
       pic_flags = %w(-fPIC)
       
-      out_dir = "#{@platform.arch}-#{@platform.os}"
+      out_dir = @platform.name
+      @include_paths << out_dir
+
       if @ext_dir != '.'
         out_dir = File.join(@ext_dir, out_dir)
       end
@@ -105,50 +120,58 @@ module XNI
       cxxflags = (@cxxflags + @cflags + pic_flags + iflags + defines).join(' ')
       ld_flags = (@library_paths.map { |path| "-L#{path}" } + @ldflags).join(' ')
       libs = (@libraries.map { |l| "-l#{l}" } + @libs).join(' ')
-
-      src_files = FileList["#{@ext_dir}/**/*.{c,cpp}"]
-      src_files += @exports.map { |e| e[:stub] }
-      obj_files = src_files.ext('.o').map { |f| File.join(out_dir, f.sub(/^#{@ext_dir}\//, '')) }
-      ld = src_files.detect { |f| f =~ /\.cpp$/ } ? cxx : cc
-
-      src_files.each do |src|
-        obj_file = File.join(out_dir, src.sub(/\.(c|cpp)$/, '.o').sub(/^#{@ext_dir}\//, ''))
-        extra_opts = src =~ /__xni_/ ? ' -fomit-frame-pointer ' : '' 
-        if src =~ /\.c$/
-          file obj_file => [src, File.dirname(obj_file)] do |t|
-            sh "#{cc} #{cflags}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
-          end
-
-        else
-          file obj_file => [src, File.dirname(obj_file)] do |t|
-            sh "#{cxx} #{cxxflags}#{extra_opts} -o #{t.name} -c #{t.prerequisites[0]}"
-          end
-        end
-
-        CLEAN.include(obj_file)
+      ld = cxx
+      
+      obj_files = []
+      
+      FileList["#{@ext_dir}/**/*.{c,cpp}"].exclude(/#{out_dir}/).each do |src_file|
+        obj_file = File.join(out_dir, src_file.sub(/\.(c|cpp)$/, '.o').sub(/^#{@ext_dir}\//, ''))
+        compile(src_file, obj_file, cc: cc, cxx: cxx, cflags: cflags, cxxflags: cxxflags)
+        obj_files << obj_file
       end
 
-      desc "Build dynamic library"
+      @exports.each do |e|
+        header = File.join(out_dir, File.basename(e[:rb_file]).sub(/\.rb$/, '.h'))
+        stub = File.join(out_dir, '__xni_' + File.basename(e[:rb_file]).sub(/\.rb$/, '.cpp'))
+        
+        file header => [ e[:rb_file], out_dir ] do |t|
+          ruby "-I#{File.join(File.dirname(__FILE__), 'export')} #{File.expand_path('../export/exporter.rb', __FILE__)} #{t.prerequisites[0]} #{stub} #{header}"
+        end
+        
+        desc "Export #{e[:rb_file]}"
+        namespace :export do
+          task File.basename(e[:rb_file]) => header
+        end
+        
+        file stub => [ header ]
+        obj_file = stub.sub(/\.(c|cpp)$/, '.o')
+        compile(stub, obj_file, cxx: cxx, cxxflags: cxxflags)
+        obj_files << obj_file
+
+        CLOBBER.include(header)
+        CLOBBER.include(stub)
+
+        obj_files.each { |o| file o => [ header ] }
+      end
+
+      # Add in runtime files
+      runtime_srcs = Dir.glob(File.expand_path('../../../runtime/*.cpp', __FILE__))
+      runtime_srcs.each do |src|
+        obj_file = File.join(out_dir, '__xni_rt_' + File.basename(src).sub(/\.(c|cpp)$/, '.o'))
+        compile(src, obj_file, cxx: cxx, cxxflags: cxxflags)
+        obj_files << obj_file
+      end
+
+
+      CLEAN.include(obj_files)
+
+      desc 'Build dynamic library'
       file lib_name => obj_files do |t|
         sh "#{ld} #{so_flags} -o #{t.name} #{t.prerequisites.join(' ')} #{ld_flags} #{libs}"
       end
       CLEAN.include(lib_name)
 
-      @exports.each do |e|
-        desc "Export #{e[:rb_file]}"
-        file e[:header] => [e[:rb_file]] do |t|
-          ruby "-I#{File.join(File.dirname(__FILE__), 'export')} #{File.join(File.dirname(__FILE__), 'export', 'exporter.rb')} #{t.prerequisites[0]} #{t.name}"
-        end
-        file e[:stub] => e[:header] 
-
-        obj_files.each { |o| file o => [ e[:header] ] }
-        CLOBBER.include(e[:header])
-        CLOBBER.include(e[:stub])
-
-        desc "Export API headers"
-        task :api_headers => [e[:header]]
-      end
-
+      
       task :default => [lib_name]
       task :package => [:api_headers]
     end

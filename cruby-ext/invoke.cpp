@@ -84,21 +84,53 @@ AttachedMethod::AttachedMethod(const string& name, shared_ptr<Function> function
     }
 }
 
+static void vm_raise(void* vm_data, void* ex, const char* message);
+static struct VMInterface {
+    void (*vm_raise)(void*, void *, const char *);
+} vm_functions = {
+    vm_raise,
+};
+
+struct NativeContext {
+    // public layout of xni vm interface
+    void* ext_data;
+    void* vm_data;
+    VMInterface* vm;
+    
+    // internal data
+    RaiseException* ex;
+    
+    NativeContext(ExtensionData* ed): ext_data(ed->ext_data()), vm_data(this), vm(&vm_functions), ex(NULL) {}
+    ~NativeContext() {
+        if (ex != NULL) delete ex;
+    }
+};
+
 VALUE
 InstanceMethod::invoke(int argc, VALUE* argv, VALUE self)
 {
-    void* extra_data[] = { m_ext_data->ext_data, (void *) (uintptr_t) 0xdeadbeef };
+    void* extra_data[2];
     TRY(
+        NativeContext context(m_ext_data.get());
+        extra_data[0] = &context;
         extra_data[1] = DataObject::from_value(self)->address(); 
-        return xni::invoke(&m_cif, argc, argv, m_function, extra_data, 2);
+        VALUE result = xni::invoke(&m_cif, argc, argv, m_function, extra_data, 2);
+        if (context.ex) throw *context.ex;
+        return result;
     );
 }
 
 VALUE
 ModuleMethod::invoke(int argc, VALUE* argv, VALUE self)
 {
-    void* extra_data[] = { m_ext_data->ext_data };
-    TRY(return xni::invoke(&m_cif, argc, argv, m_function, extra_data, 1));
+    void* extra_data[1];
+    TRY(
+        NativeContext context(m_ext_data.get());
+        extra_data[0] = &context;
+        VALUE result = xni::invoke(&m_cif, argc, argv, m_function, extra_data, 1);
+        if (context.ex) throw *context.ex;
+        return result;
+    );
 }
 
 struct call_data {
@@ -323,4 +355,31 @@ static size_t
 attached_stub_memsize(const void *obj)
 {
     return obj != NULL ? sizeof(AttachedStub) : 0;
+}
+
+struct XNIException {
+    int exc;
+};
+
+static VALUE rb_exc(XNIException *ex) 
+{
+    switch (ex->exc) {
+        case 1:
+            return rb_eException;
+        case 2:
+            return rb_eRuntimeError;
+        case 3:
+            return rb_eArgError;
+        case 4:
+            return rb_eIndexError;
+        default:
+            return rb_eRuntimeError;
+    }
+
+}
+static void 
+vm_raise(void* vm_data, void* ex, const char* message)
+{
+    NativeContext* context = (NativeContext *) vm_data;
+    context->ex = new RubyException(rb_exc((XNIException *) ex), "%s", message);
 }

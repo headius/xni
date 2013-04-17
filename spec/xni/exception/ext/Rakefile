@@ -1,0 +1,5 @@
+require 'xni/compile_task'
+
+XNI::CompileTask.new('exc') do |t|
+  t.export '../lib/exc.rb'
+end
