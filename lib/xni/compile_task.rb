@@ -164,6 +164,9 @@ module XNI
 
 
       CLEAN.include(obj_files)
+      
+      # create all the directories for the output files 
+      obj_files.map { |f| File.dirname(f) }.sort.uniq.map { |d| directory d }
 
       desc 'Build dynamic library'
       file lib_name => obj_files do |t|
