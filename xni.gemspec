@@ -1,16 +1,15 @@
+require File.expand_path("../lib/#{File.basename(__FILE__, '.gemspec')}/version", __FILE__)
+
 Gem::Specification.new do |s|
   s.name = 'xni'
-  s.version = '0.1.0.dev'
+  s.version = XNI::VERSION
   s.author = 'Wayne Meissner'
   s.email = 'wmeissner@gmail.com'
   s.homepage = 'http://wiki.github.com/wmeissner/xni'
   s.summary = 'X Native Interface'
   s.description = 'Native C access for JRuby'
   s.files = %w(xni.gemspec LICENSE README.md Rakefile) 
-  s.files << Dir.glob('ext/**/*.[ch]')
-  s.files << Dir.glob('{spec,libtest}/**/*')
-  s.files << Dir.glob('include/**/*.h')
-  s.files << Dir.glob('lib/**/*.rb')
+  s.files += Dir['lib/**/*.rb', 'ext/**/*.[ch]', 'include/**/*.h', '{spec,libtest}/**/*']
   s.has_rdoc = false
   s.license = 'Apache 2.0'
   s.required_ruby_version = '>= 1.9.3'
