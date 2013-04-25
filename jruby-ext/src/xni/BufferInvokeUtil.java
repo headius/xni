@@ -105,6 +105,9 @@ class BufferInvokeUtil {
                 return stringAddress != 0L 
                         ? runtime.newString(new ByteList(MemoryIO.getInstance().getZeroTerminatedByteArray(stringAddress)))
                         : runtime.getNil();
+            
+            case BOOL:
+                return runtime.newBoolean(invoker.invokeInt(callContext, function, invocationBuffer) != 0);
 
             default:
                 throw runtime.newRuntimeError("invalid result type: " + nativeType);
