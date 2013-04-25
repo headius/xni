@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.summary = 'X Native Interface'
   s.description = 'Native C access for JRuby'
   s.files = %w(xni.gemspec LICENSE README.md Rakefile) 
-  s.files += Dir['lib/**/*.rb', 'ext/**/*.[ch]', 'include/**/*.h', '{spec,libtest}/**/*', 'runtime/**/*.{cpp,h}']
+  s.files += Dir['lib/**/*.rb', 'ext/**/*.{cpp,h}', 'include/**/*.h', '{spec,libtest}/**/*.{c,cpp,h,rb}', 'runtime/**/*.{cpp,h}']
   s.files << 'lib/xni/xni_ext.jar' if defined?(JRUBY_VERSION)
   s.has_rdoc = false
   s.license = 'Apache 2.0'
