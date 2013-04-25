@@ -17,4 +17,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'rake', '>= 10.0.0'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rubygems-tasks'
+  s.extensions = ['cruby-ext/extconf.rb']
 end
