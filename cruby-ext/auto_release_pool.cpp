@@ -127,8 +127,9 @@ auto_release_pool_allocate(VALUE klass)
     return TypedData_Wrap_Struct(klass, &auto_release_pool_data_type, new AutoReleasePool());
 }
 
+
 static VALUE
-auto_release_pool_initialize(VALUE self)
+auto_release_pool_new(VALUE klass)
 {
     if (!rb_block_given_p()) {
         rb_raise(rb_eArgError, "block required");
@@ -137,10 +138,12 @@ auto_release_pool_initialize(VALUE self)
     
     ThreadData* td = thread_data_get();
     AutoReleasePool* prev_pool = td->active_pool;
-    TRY(td->active_pool = AutoReleasePool::from_value(self));
+    VALUE pool = rb_class_new_instance(0, NULL, klass);
+    
+    TRY(td->active_pool = AutoReleasePool::from_value(pool));
     
     int state = 0;
-    rb_protect(rb_yield, self, &state);
+    VALUE result = rb_protect(rb_yield, pool, &state);
     td->active_pool->dispose();
     td->active_pool = prev_pool;
     
@@ -148,7 +151,7 @@ auto_release_pool_initialize(VALUE self)
         rb_jump_tag(state);
     }
 
-    return Qnil;
+    return result;
 }
 
 static VALUE
@@ -201,6 +204,6 @@ xni::auto_release_pool_init(VALUE xniModule)
     cAutoReleasePool = rb_define_class_under(xniModule, "AutoReleasePool", rb_cObject);
     
     rb_define_alloc_func(cAutoReleasePool, auto_release_pool_allocate);
-    rb_define_module_function(cAutoReleasePool, "initialize", RUBY_METHOD_FUNC(auto_release_pool_initialize), 0);
+    rb_define_module_function(cAutoReleasePool, "new", RUBY_METHOD_FUNC(auto_release_pool_new), 0);
     rb_define_method(cAutoReleasePool, "inspect", RUBY_METHOD_FUNC(auto_release_pool_inspect), 0);
 }
