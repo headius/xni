@@ -15,9 +15,6 @@ if !defined?(RUBY_ENGINE) || RUBY_ENGINE == 'ruby'
     libffi_ok = have_library("ffi", "ffi_call", [ "ffi.h" ]) ||
         have_library("libffi", "ffi_call", [ "ffi.h" ])
     libffi_ok &&= have_func("ffi_prep_closure")
-
-    # Check if the raw api is available.
-    $defs << "-DHAVE_RAW_API" if have_func("ffi_raw_call") && have_func("ffi_prep_raw_closure")
   end
   
   raise "no libffi on system" unless libffi_ok
